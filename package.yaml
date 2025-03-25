@@ -1,0 +1,64 @@
+name: report
+version: 0.1.0.0
+synopsis: Haskell code for master thesis
+description: See mol thesis Sequent Calculus With Zippers
+maintainer: Xiaoshuang Yang <thuyxs17@gmail.com>
+category: Logic
+
+ghc-options: -Wall
+
+dependencies:
+  - base
+  - random
+  - QuickCheck
+  - graphviz
+  - temporary
+  - bytestring
+  - tagged
+  - hspec
+  - multiset
+  - containers
+
+
+
+library:
+  source-dirs: lib
+
+executables:
+  myprogram:
+    main: Main.hs
+    source-dirs: exec
+    dependencies:
+      - report
+
+tests:
+  Test:
+    main: Test.hs
+    source-dirs: test
+    dependencies:
+      - report
+      - QuickCheck
+      - hspec
+
+benchmarks:
+  Bench:
+    source-dirs: bench
+    main: bench.hs
+    dependencies:
+      - base >= 4.8 && < 5
+      - bytestring
+      - cassava
+      - criterion
+      - directory
+      - scientific
+      - report
+      - split
+      - vector
+  Memory:
+    source-dirs: bench
+    ghc-options: -rtsopts
+    main: memory.hs
+    dependencies:
+      - base >= 4.8 && < 5
+      - report
+      - weigh

@@ -1,0 +1,19 @@
+cradle:
+  stack:
+    - path: "./lib"
+      component: "report:lib"
+
+    - path: "./exec/Main.hs"
+      component: "report:exe:myprogram"
+
+    - path: "./exec/Paths_report.hs"
+      component: "report:exe:myprogram"
+
+    - path: "./test"
+      component: "report:test:Test"
+
+    - path: "./bench/bench.hs"
+      component: "report:bench:Bench"
+
+    - path: "./bench/memory.hs"
+      component: "report:bench:Memory"
