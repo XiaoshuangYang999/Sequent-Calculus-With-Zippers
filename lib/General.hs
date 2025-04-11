@@ -180,7 +180,7 @@ fromZip :: ZipProof f -> Proof f
 fromZip (ZP x Top) = x
 fromZip zp = fromZip (move_up zp)
 
--- A function that tells whether a node has right siblings
+-- | Does the node have a right sibling?
 hasRsibi :: ZipPath f -> Bool
 hasRsibi (Step _ _ _ _ (_:_))= True
 hasRsibi _ = False
@@ -297,12 +297,11 @@ conP = List.foldr ConP topP
 disP :: [FormP] -> FormP
 disP = List.foldr DisP BotP
 
--- Substitute f x t = f[t/x]
-substituteP :: FormP -> FormP -> FormP -> FormP
+-- | Substitution in propositional formulas:
+-- @substituteP f x t@ means we replace @x@ by @t@ in @f@.
+substituteP :: FormP -> Atom -> FormP -> FormP
 substituteP BotP _ _ = BotP
-substituteP f@(AtP _) x t = if f == x
-                        then t
-                        else f
+substituteP f@(AtP y) x t = if y == x then t else f
 substituteP (ConP f g) x t = ConP (substituteP f x t) (substituteP g x t)
 substituteP (DisP f g) x t = DisP (substituteP f x t) (substituteP g x t)
 substituteP (ImpP f g) x t = ImpP (substituteP f x t) (substituteP g x t)
@@ -359,17 +358,17 @@ conM = List.foldr ConM topM
 disM :: [FormM] -> FormM
 disM = List.foldr DisM BotM
 
--- substitute f x t = f[x/t]
-substituteM :: FormP -> FormP -> FormP -> FormP
+-- | Substitution in modal formulas:
+-- @substituteM f x t@ means we replace @x@ by @t@ in @f@.
+substituteM :: FormP -> Atom -> FormP -> FormP
 substituteM BotP _ _ = BotP
-substituteM f@(AtP _) x t = if f == x
-                        then t
-                        else f
+substituteM f@(AtP y) x t = if y == x then t else f
 substituteM (ConP f g) x t = ConP (substituteM f x t) (substituteM g x t)
 substituteM (DisP f g) x t = DisP (substituteM f x t) (substituteM g x t)
 substituteM (ImpP f g) x t = ImpP (substituteM f x t) (substituteM g x t)
 
--- Transform FormP to FormM
+-- * Embedding Propositional language into Modal language
+
 pTom :: FormP -> FormM
 pTom BotP = BotM
 pTom (AtP x) = AtM x

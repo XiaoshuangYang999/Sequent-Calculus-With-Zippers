@@ -1,4 +1,4 @@
-module CPL where
+module CPL (classical) where
 
 import General
 import qualified Data.Set as Set

@@ -4,40 +4,40 @@ module Example where
 import General
 import Data.List as List
 
-
 -- * Propositional tests
+
 top,o,p,q,r :: FormP
 top = negP BotP
 [o,p,q,r] = List.map AtP ['o','p','q','r']
 
--- Excluded middle
+-- | Excluded middle
 em :: FormP
 em = DisP p (negP p)
 
--- Double negation
+-- | Double negation
 dn :: FormP
 dn = iffP (negP (negP p)) p
 
--- Right Double negation
+-- | Right Double negation
 dnR :: FormP
 dnR = ImpP p (negP (negP p))
 
--- Pierce's Law
+-- | Pierce's Law
 pierce :: FormP
 pierce = ImpP (ImpP (ImpP p q) p) p
 
--- List of tests
+-- | List of tests
 t1,t2,t3,t4 :: FormP
-[t1,t2,t3,t4] = [ImpP p p
+[t1,t2,t3,t4] = [ ImpP p p
                 , negP (negP em)
                 , ImpP (ImpP p (ImpP p q)) (ImpP p q)
                 , ImpP (ImpP pierce q) q]
-
 
 phi :: FormP
 phi = ImpP (ConP p (ImpP p q)) (ImpP (ImpP p q) q)
 
 -- * Modal logic tests
+
 a1,b1,c1,d1,e1 :: FormM
 [a1,b1,c1,d1,e1] = map AtM ['a','b','c','d','e']
 
@@ -48,7 +48,9 @@ ktest :: FormM
 ktest = ImpM (Box (ImpM a1 b1)) (ImpM (Box a1) (ImpM (Box b1) (Box c1)))
 
 -- * For benchmarks
--- PL
+
+-- ** Propositional Logic
+
 disPhiPieR :: Int -> FormP
 disPhiPieR k = foldr DisP phi (replicate (2*k) pierce )
 
@@ -91,7 +93,8 @@ allFormulasP =
   , ("conBotL", conBotL)
   ]
 
--- ML
+-- ** Modal Logic
+
 boxesTop :: Int -> FormM
 boxesTop 0 = topM
 boxesTop n = Box (boxesTop (n-1))
