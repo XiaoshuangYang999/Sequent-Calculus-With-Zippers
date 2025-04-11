@@ -29,3 +29,4 @@ dist-*
 *.cabal
 temp.pdf
 report.pdf
+bench/results*
