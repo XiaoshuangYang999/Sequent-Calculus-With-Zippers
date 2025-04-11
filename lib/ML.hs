@@ -9,10 +9,8 @@ modal = Log
   , bot         = BotM
   , isAtom      = isatomM
   , isAxiom     = isAxiomM
-  , safeRuleT   = replaceRuleT safeML
-  , unsafeRuleT = [kboxT]  
-  , safeRuleZ   = replaceRuleZ safeML
-  , unsafeRuleZ = [kboxZ]
+  , safeRule    = replaceRule safeML
+  , unsafeRules = [kboxT]
   }
 
 -- Safe rules
@@ -28,27 +26,23 @@ safeML _                  = []
 -- Helper functions
 isLeftBox :: Either FormM FormM -> Bool
 isLeftBox (Left (Box _)) = True
-isLeftBox _              = False 
+isLeftBox _              = False
 
 isRightBox :: Either FormM FormM -> Bool
 isRightBox (Right (Box _)) = True
-isRightBox _               = False 
+isRightBox _               = False
 
 fromBox :: Either FormM FormM -> Either FormM FormM
 fromBox (Left (Box f)) = Left f
 fromBox g = g
 
-removeBoxLeft :: Sequent FormM -> Sequent FormM 
+removeBoxLeft :: Sequent FormM -> Sequent FormM
 removeBoxLeft xs = Set.map fromBox $ Set.filter isLeftBox xs
 
 func :: FormM -> Sequent FormM -> [(RuleName,[Sequent FormM])]
 func f fs = [("K☐", [Right f `Set.insert` fs])]
 
 -- K box
-kboxT :: RuleT FormM
-kboxT (_,Node fs "" []) (Right (Box f)) = Set.toList $ Set.map (func f) $ Set.powerSet.removeBoxLeft $ fs
-kboxT _ _ = []
-
-kboxZ :: RuleZ FormM
-kboxZ (ZP (Node fs "" []) _) (Right (Box f)) = Set.toList $ Set.map (func f) $ Set.powerSet.removeBoxLeft $ fs
-kboxZ _ _ = []
+kboxT :: Rule FormM
+kboxT _ fs (Right (Box f)) = Set.toList $ Set.map (func f) $ Set.powerSet.removeBoxLeft $ fs
+kboxT _ _ _ = []

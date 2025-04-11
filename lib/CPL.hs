@@ -1,5 +1,5 @@
 module CPL where
-  
+
 import General
 import qualified Data.Set as Set
 
@@ -9,10 +9,8 @@ classical = Log
   , bot         = BotP
   , isAtom      = isatomP
   , isAxiom     = isAxiomP
-  , safeRuleT   = replaceRuleT safeCPL
-  , unsafeRuleT = []
-  , safeRuleZ   = replaceRuleZ safeCPL
-  , unsafeRuleZ = []
+  , safeRule    = replaceRule safeCPL
+  , unsafeRules = []
   }
 
 safeCPL :: Either FormP FormP -> [(RuleName,[Sequent FormP])]

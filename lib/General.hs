@@ -1,20 +1,19 @@
-module General where
+{-# LANGUAGE InstanceSigs,TypeSynonymInstances #-}
 
+module General where
 import Basics
 import Data.GraphViz
 import Data.GraphViz.Types.Monadic hiding ((-->))
 import Test.QuickCheck
 import Data.List as List
-import Data.Set
+import Data.Set (Set)
 import qualified Data.Set as Set
 
 type Sequent f = Set (Either f f)
 
 -- Pretty printing a list of f's
 ppList :: Show f => [f] -> String
-ppList [] = ""
-ppList [f] = show f
-ppList (f:fs@(_:_)) = show f ++ " , " ++ ppList fs
+ppList = intercalate " , " . map show
 
 -- Pretty printing a set of f's
 ppForm :: Show f => Set f -> String
@@ -47,79 +46,108 @@ instance (Show f,Ord f) => (DispAble (Proof f)) where
         edge pref (pref ++ show y' ++ ":") [toLabel rule']
         ) (zip ts [(0::Integer)..])
 
-type ProofWithH f = ([Sequent f], Proof f)
+-- * Histories, Rules, Logics
+
+type History f = [Sequent f]
+
+class HasHistory a where
+  histOf :: a f -> History f
+
+-- | A `Rule` takes the history/branch, current sequent and an active formula.
+-- It returns ways to apply a rule, each resulting in possibly multiple branches.
+type Rule f = History f -> Sequent f -> Either f f -> [[ (RuleName,[Sequent f])]]
+
+-- | A replace rule only takes an active formula.
+replaceRule :: (Eq f,Ord f) => (Either f f -> [(RuleName,[Sequent f])]) -> Rule f
+replaceRule fun _ fs g =
+  [ [ ( fst . head $ fun g
+      , [ Set.delete g fs `Set.union` newfs | newfs <- snd . head $ fun g ]
+      ) ]
+  | not (null (fun g)) ]
+
+isApplicable :: History f -> Sequent f -> Either f f -> Rule f -> Bool
+isApplicable hs fs f r = not . null $ r hs fs f
+
+-- | A Logic for a formula type `f`.
+data Logic f = Log
+  { neg         :: f -> f
+  , bot         :: f
+  , isAtom      :: f -> Bool
+  , isAxiom     :: Sequent f -> Bool
+  , safeRule    :: Rule f
+  , unsafeRules :: [Rule f]
+  }
+
+-- * Tree Proofs
+
+newtype ProofWithH f = HP (History f, Proof f)
+
+instance HasHistory ProofWithH where
+  histOf (HP (hs, _)) = hs
+
+hpSnd :: ProofWithH f -> Proof f
+hpSnd (HP (_, pf)) = pf
+
+-- * Zip Proofs
 
 data ZipPath f = Top | Step (Sequent f) RuleName (ZipPath f) [Proof f] [Proof f]
 
 data ZipProof f = ZP (Proof f) (ZipPath f)
 
-type RuleT f = ProofWithH f -> Either f f -> [[ (RuleName,[Sequent f])]]
+instance HasHistory ZipPath where
+  histOf :: ZipPath f -> History f
+  histOf Top = []
+  histOf (Step xs _ p _ _) = xs : histOf p
 
-type RuleZ f = ZipProof f -> Either f f -> [[ (RuleName,[Sequent f])]]
-
-data Logic f = Log
-  { neg         :: f -> f
-  , bot         :: f
-  , isAtom      :: f -> Bool
-  , isAxiom     :: Sequent f -> Bool  
-  , safeRuleT   :: RuleT f
-  , unsafeRuleT :: [RuleT f]  
-  , safeRuleZ   :: RuleZ f
-  , unsafeRuleZ :: [RuleZ f]
-  }
+instance HasHistory ZipProof where
+  histOf :: ZipProof f -> History f
+  histOf (ZP _ zpath) = histOf zpath
 
 
 -- * Tree-based prover
+
 startForT :: f -> ProofWithH f
-startForT f =  ([],Node (Set.singleton (Right f)) "" [])
+startForT f =  HP ([],Node (Set.singleton (Right f)) "" [])
 
 isClosedPfT :: Eq f => ProofWithH f -> Bool
-isClosedPfT (_,fs) = isClosedPf fs
+isClosedPfT (HP (_,fs)) = isClosedPf fs
 
-isApplicableToT :: ProofWithH f -> Either f f -> RuleT f -> Bool
-isApplicableToT fs f r = not . List.null $ r fs f
-
-extendT  :: (Eq f, Show f, Ord f) => Logic f -> ProofWithH f -> [ProofWithH f ]
-extendT l pt@(h, Node fs "" [])=
-  case ( Left (bot l) `Set.member` fs,
-        isAxiom l fs,
-        Set.lookupMin $ Set.filter (\g -> isApplicableToT pt g (safeRuleT l)) fs,
-        unsafeRuleT l
-        )  of
-  (True,_, _,_ )    -> [(h, Node fs "L⊥" [Proved])]
-  -- fs is an axiom
-  (_,True, _,_ )    -> [(h, Node fs "Ax" [Proved])]
-  -- The safe rule can be applied
-  (_   ,_,Just f,_ )   -> [
-                    (h, Node fs therule (List.map snd ts) ) |
-                    (therule,result) <- head $ safeRuleT l pt f,
-                    ts <- pickOneOfEach [ extendT l (fs : h, Node nfs "" [])| nfs <- result]                    
-                    ]
-  -- The logic has no unsafe rule -> CPL
-  (_   ,_,Nothing,[])  -> [(h, Node fs "" [])]
-  -- The logic has an unsafe rule -> IPL, K
-  (_   ,_,Nothing,r:_) -> case checkEmpty $ Set.filter (\g -> isApplicableToT pt g r) fs of
-        -- No applicable formulas in fs
-        Nothing -> [(h, Node fs "" [])]
-        -- fs contains applicable formulas
-        Just gs ->  if any isClosedPfT nps
+extendT  :: (Eq f, Show f, Ord f) => Logic f -> ProofWithH f -> [ProofWithH f]
+extendT l pt@(HP (h, Node fs "" [])) =
+  case ( Left (bot l) `Set.member` fs
+       , isAxiom l fs
+       , Set.lookupMin $ Set.filter (\g -> isApplicable h fs g (safeRule l)) fs
+       , unsafeRules l ) of
+  (True, _   , _     ,_ ) -> [HP (h, Node fs "L⊥" [Proved])] -- Left side contains ⊥.
+  (_   , True, _     ,_ ) -> [HP (h, Node fs "Ax" [Proved])] -- We have an axiom.
+  (_   , _   , Just f,_ ) -> -- The safe rule can be applied
+    [ HP (h, Node fs therule (map hpSnd ts) )
+    | (therule, result) <- head $ safeRule l h fs f
+    , ts <- pickOneOfEach [ extendT l (HP (fs : h, Node nfs "" []))
+                          | nfs <- result ] ]
+  -- The logic has no unsafe rule -> CPL: -- FIXME rephrase
+  (_   ,_,Nothing,[])  -> [HP (h, Node fs "" [])]
+  -- The logic has an unsafe rule -> IPL, K:
+  (_   ,_,Nothing,r:_) -> case checkEmpty $ Set.filter (\g -> isApplicable h fs g r) fs of
+        Nothing -> [HP (h, Node fs "" [])] -- No applicable formulas in fs
+        Just gs ->  if any isClosedPfT nps -- fs contains applicable formulas
                       then List.take 1 (List.filter isClosedPfT nps)
-                      else [(h, Node fs "" [])]
+                      else [HP (h, Node fs "" [])]
           where
             nps = concat $ List.concatMap tryExtendT gs
-            -- tryExtendT :: Either f f -> [[([Sequent f], Proof f)]]
-            tryExtendT g = [  List.map (\pwh -> (h, Node fs therule [snd pwh]))
-                                $ extendT l (fs : h, Node (head result) "" [])
-                           | (therule,result) <- head $ (head.unsafeRuleT $ l) pt g ]
+            tryExtendT g = [ List.map (\pwh -> HP (h, Node fs therule [hpSnd pwh]))
+                                $ extendT l (HP (fs : h, Node (head result) "" []))
+                           | (therule,result) <- head $ (head . unsafeRules $ l) (histOf pt) fs g ]
 -- just for pattern matching
-extendT l (h,Node fs r@(_:_) xs@(_:_))= [ (h,Node fs r $ List.map snd nfs)
-                                        | nfs <- List.map (\f -> extendT l (fs:h,f)) xs]
-extendT _ (h,Proved) = [(h,Proved)]
-extendT _ (_,Node _ (_:_) [])= error"cannot have rules and no children"
-extendT _ (_,Node _ [] (_:_)) = error"cannot have children and no rules"
+extendT l (HP (h,Node fs r@(_:_) xs@(_:_))) = -- FIXME can we get rid of this?
+  [ HP (h,Node fs r $ List.map hpSnd nfs)
+  | nfs <- List.map (\f -> extendT l (HP (fs:h,f))) xs]
+extendT _ (HP (h,Proved)) = [HP (h,Proved)]
+extendT _ (HP (_,Node _ (_:_) [])) = error"cannot have rules and no children"
+extendT _ (HP (_,Node _ [] (_:_))) = error"cannot have children and no rules"
 
 proveT :: (Eq f, Show f,Ord f) => Logic f -> f -> [Proof f]
-proveT l f = List.map snd $ extendT l (startForT f)
+proveT l f = List.map hpSnd $ extendT l (startForT f)
 
 isProvableT :: (Eq f, Show f, Ord f) => Logic f -> f -> Bool
 isProvableT l f = any isClosedPf (proveT l f)
@@ -171,27 +199,25 @@ isClosedZP :: Eq f => ZipProof f -> Bool
 isClosedZP (ZP fs Top) = isClosedPf fs
 isClosedZP (ZP fs p) = isClosedPf fs &&  (isClosedZP . switch $ ZP fs p)
 
-isApplicableToZ :: ZipProof f -> Either f f -> RuleZ f -> Bool
-isApplicableToZ fs f r = not . List.null $ r fs f
 
 extendZ  :: (Ord f,Eq f) => Logic f -> ZipProof f -> [ZipProof f]
 extendZ l zp@(ZP (Node fs "" []) p) =
-  case ( Left (bot l) `Set.member` fs,
-        isAxiom l fs,
-        Set.lookupMin $ Set.filter (\g -> isApplicableToZ zp g (safeRuleZ l)) fs,
-        unsafeRuleZ l)  of
+  case ( Left (bot l) `Set.member` fs
+       , isAxiom l fs
+       , Set.lookupMin $ Set.filter (\g -> isApplicable (histOf zp) fs g (safeRule l)) fs
+       , unsafeRules l) of
   -- Switch the path if the current sequent is closed
   (True,_,_  ,_ )    -> extendZ l (switch (ZP (Node fs "L⊥" [Proved]) p))
   (_,True,_  ,_ )    -> extendZ l (switch (ZP (Node fs "Ax" [Proved]) p))
   -- Find a safe rule to use
   (_ ,_  ,Just f,_)     -> extendZ l (move_down $ ZP (Node fs therule ts) p) where
-            (therule,result) = head . head $ safeRuleZ l zp f
+            (therule,result) = head . head $ safeRule l (histOf zp) fs f
             ts = [ Node nfs "" []| nfs <- result]
   -- Check if there is unsafe rule
         -- Whenever a dead end is found, stop the proving process
   (_ ,_  ,Nothing ,[])    -> [ZP (Node fs "" []) p]
         -- Has an unsafe rule
-  (_,_   ,Nothing ,r:_)   -> case  checkEmpty $ Set.filter (\g -> isApplicableToZ zp g r) fs of
+  (_,_   ,Nothing ,r:_)   -> case  checkEmpty $ Set.filter (\g -> isApplicable (histOf zp) fs g r) fs of
                 -- Not applicable
                 Nothing -> [ZP (Node fs "" []) p]
                 -- Find a list of formulas to apply
@@ -201,7 +227,7 @@ extendZ l zp@(ZP (Node fs "" []) p) =
                       where
                         nps = concat $ List.concatMap tryExtendZ gs
                         tryExtendZ g = [ extendZ l (ZP (Node (head result) "" []) (Step fs therule p [] []) )
-                          | (therule,result) <- head $ (head.unsafeRuleZ $ l) zp g ]
+                          | (therule,result) <- head $ (head.unsafeRules $ l) (histOf zp) fs g ]
 extendZ _ (ZP Proved p) = [ZP Proved p]
 extendZ _ (ZP (Node _ (_:_) []) _ )= error"cannot have rules and no children"
 extendZ _ (ZP (Node fs r@(_:_) xs@(_:_)) p )= [ZP (Node fs r xs) p]
@@ -221,26 +247,11 @@ proveprintZ l f = if isProvableZ l f
 provePdfZ :: (Show f, Eq f,Ord f) => Logic f -> f -> IO FilePath
 provePdfZ l f = pdf $ proveprintZ l f
 
--- without built-in contraction; delete the original one
-replaceRuleZ :: (Eq f,Ord f) => (Either f f -> [(RuleName,[Sequent f])]) -> RuleZ f
-replaceRuleZ fun (ZP (Node fs "" []) _) g = 
-    [[(fst . head $ fun g
-    ,[ Set.delete g fs `Set.union` newfs | newfs <- snd . head $ fun g])] 
-    | not (List.null (fun g))]
-replaceRuleZ _ _ _ = []
+-- * The Propositional language
 
-replaceRuleT :: (Eq f,Ord f) => (Either f f -> [(RuleName,[Sequent f])]) -> RuleT f
-replaceRuleT fun (_,Node fs "" []) g = 
-    [[(fst . head $ fun g
-    ,[ Set.delete g fs `Set.union` newfs | newfs <- snd . head $ fun g])] 
-    | not (List.null (fun g))]
-replaceRuleT _ _ _ = []
-
-
--- * The language
 type Atom = Char
 
--- PL
+-- | Propositional Formulas
 data FormP = BotP | AtP Atom | ConP FormP FormP | DisP FormP FormP | ImpP FormP FormP
   deriving (Eq,Ord)
 
@@ -296,8 +307,8 @@ substituteP (ConP f g) x t = ConP (substituteP f x t) (substituteP g x t)
 substituteP (DisP f g) x t = DisP (substituteP f x t) (substituteP g x t)
 substituteP (ImpP f g) x t = ImpP (substituteP f x t) (substituteP g x t)
 
+-- * The Modal Language
 
--- ML
 data FormM = BotM | AtM Atom | ConM FormM FormM | DisM FormM FormM | ImpM FormM FormM | Box FormM
   deriving (Eq,Ord)
 
