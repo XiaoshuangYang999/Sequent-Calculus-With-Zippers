@@ -1,7 +1,7 @@
-name: report
+name: seqzip
 version: 0.1.0.0
-synopsis: Haskell code for master thesis
-description: See mol thesis Sequent Calculus With Zippers
+synopsis: Sequent Calculus with Zippers
+description: See readme.
 maintainer: Xiaoshuang Yang <thuyxs17@gmail.com>
 category: Logic
 
@@ -19,24 +19,15 @@ dependencies:
   - multiset
   - containers
 
-
-
 library:
   source-dirs: lib
-
-executables:
-  myprogram:
-    main: Main.hs
-    source-dirs: exec
-    dependencies:
-      - report
 
 tests:
   Test:
     main: Test.hs
     source-dirs: test
     dependencies:
-      - report
+      - seqzip
       - QuickCheck
       - hspec
 
@@ -51,7 +42,7 @@ benchmarks:
       - criterion
       - directory
       - scientific
-      - report
+      - seqzip
       - split
       - vector
   Memory:
@@ -60,5 +51,5 @@ benchmarks:
     main: memory.hs
     dependencies:
       - base >= 4.8 && < 5
-      - report
+      - seqzip
       - weigh

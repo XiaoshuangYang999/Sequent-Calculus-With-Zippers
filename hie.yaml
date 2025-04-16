@@ -1,19 +1,19 @@
 cradle:
   stack:
     - path: "./lib"
-      component: "report:lib"
+      component: "seqzip:lib"
 
     - path: "./exec/Main.hs"
-      component: "report:exe:myprogram"
+      component: "seqzip:exe:myprogram"
 
-    - path: "./exec/Paths_report.hs"
-      component: "report:exe:myprogram"
+    - path: "./exec/Paths_seqzip.hs"
+      component: "seqzip:exe:myprogram"
 
     - path: "./test"
-      component: "report:test:Test"
+      component: "seqzip:test:Test"
 
     - path: "./bench/bench.hs"
-      component: "report:bench:Bench"
+      component: "seqzip:bench:Bench"
 
     - path: "./bench/memory.hs"
-      component: "report:bench:Memory"
+      component: "seqzip:bench:Memory"
