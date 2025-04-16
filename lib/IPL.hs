@@ -41,9 +41,9 @@ saturated fs f = case safeIPL f of []              -> True
 -- | Like `replaceRule` but keeping the active formula (built-in weakening) and stopping when saturated.
 replaceRuleIPLsafe :: (Either FormP FormP -> [(RuleName, [Sequent FormP])]) -> Rule FormP
 replaceRuleIPLsafe fun _ fs g =
-  [ [ ( fst . head $ fun g
-      , [ fs `Set.union` newfs | newfs <- snd . head $ fun g] -- not deleting `g` here!
-      ) ]
+  [ ( fst . head $ fun g
+    , [ fs `Set.union` newfs | newfs <- snd . head $ fun g] -- not deleting `g` here!
+    )
   | not (saturated fs g) -- additional check
   , not (List.null (fun g)) ]
 
@@ -54,9 +54,9 @@ applyIPL fs f = List.map (Set.insert f (leftOfSet fs) `Set.union`)
 -- | Like `replaceRule` but ... TODO: explain.
 replaceRuleIPLunsafe :: (Either FormP FormP -> [(RuleName, [Sequent FormP])]) -> Rule FormP
 replaceRuleIPLunsafe fun h fs g =
-  [ [ ( fst . head $ fun g
-      , applyIPL fs g (snd (head (unsafeIPL g)))
-      ) ]
+  [ ( fst . head $ fun g
+    , applyIPL fs g (snd (head (unsafeIPL g)))
+    )
   | not (saturated fs g) -- additional check
   , historyCheck h fs g -- aditional check
   , not (List.null (fun g)) ]

@@ -32,8 +32,8 @@ kbox _ fs (Right (Box f)) = Set.toList $ Set.map (func f) $ Set.powerSet . remov
   isLeftBox (Left (Box _)) = True
   isLeftBox _              = False
   fromBox :: Either FormM FormM -> Either FormM FormM
-  fromBox (Left (Box f)) = Left f
+  fromBox (Left (Box g)) = Left g
   fromBox g = g
-  func :: FormM -> Sequent FormM -> [(RuleName,[Sequent FormM])]
-  func g seqs = [("K☐", [Set.insert (Right g) seqs])]
+  func :: FormM -> Sequent FormM -> (RuleName,[Sequent FormM])
+  func g seqs = ("K☐", [Set.insert (Right g) seqs])
 kbox _ _ _ = []

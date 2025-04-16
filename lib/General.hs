@@ -55,14 +55,14 @@ class HasHistory a where
 
 -- | A `Rule` takes the history/branch, current sequent and an active formula.
 -- It returns ways to apply a rule, each resulting in possibly multiple branches.
-type Rule f = History f -> Sequent f -> Either f f -> [[ (RuleName,[Sequent f])]]
+type Rule f = History f -> Sequent f -> Either f f -> [(RuleName,[Sequent f])]
 
 -- | A replace rule only takes an active formula.
 replaceRule :: (Eq f,Ord f) => (Either f f -> [(RuleName,[Sequent f])]) -> Rule f
 replaceRule fun _ fs g =
-  [ [ ( fst . head $ fun g
-      , [ Set.delete g fs `Set.union` newfs | newfs <- snd . head $ fun g ]
-      ) ]
+  [ ( fst . head $ fun g
+    , [ Set.delete g fs `Set.union` newfs | newfs <- snd . head $ fun g ]
+    )
   | not (null (fun g)) ]
 
 isApplicable :: History f -> Sequent f -> Either f f -> Rule f -> Bool
@@ -122,7 +122,7 @@ extendT l pt@(HP (h, Node fs "" [])) =
   (_   , True, _     ,_ ) -> [HP (h, Node fs "Ax" [Proved])] -- We have an axiom.
   (_   , _   , Just f,_ ) -> -- The safe rule can be applied
     [ HP (h, Node fs therule (map hpSnd ts) )
-    | (therule, result) <- head $ safeRule l h fs f
+    | (therule, result) <- safeRule l h fs f
     , ts <- pickOneOfEach [ extendT l (HP (fs : h, Node nfs "" []))
                           | nfs <- result ] ]
   -- The logic has no unsafe rule -> CPL: -- FIXME rephrase
@@ -137,7 +137,7 @@ extendT l pt@(HP (h, Node fs "" [])) =
             nps = concat $ List.concatMap tryExtendT gs
             tryExtendT g = [ List.map (\pwh -> HP (h, Node fs therule [hpSnd pwh]))
                                 $ extendT l (HP (fs : h, Node (head result) "" []))
-                           | (therule,result) <- head $ (head . unsafeRules $ l) (histOf pt) fs g ]
+                           | (therule,result) <- r (histOf pt) fs g ]
 -- just for pattern matching
 extendT l (HP (h,Node fs r@(_:_) xs@(_:_))) = -- FIXME can we get rid of this?
   [ HP (h,Node fs r $ List.map hpSnd nfs)
@@ -211,7 +211,7 @@ extendZ l zp@(ZP (Node fs "" []) p) =
   (_,True,_  ,_ )    -> extendZ l (switch (ZP (Node fs "Ax" [Proved]) p))
   -- Find a safe rule to use
   (_ ,_  ,Just f,_)     -> extendZ l (move_down $ ZP (Node fs therule ts) p) where
-            (therule,result) = head . head $ safeRule l (histOf zp) fs f
+            (therule,result) = head $ safeRule l (histOf zp) fs f
             ts = [ Node nfs "" []| nfs <- result]
   -- Check if there is unsafe rule
         -- Whenever a dead end is found, stop the proving process
@@ -227,7 +227,7 @@ extendZ l zp@(ZP (Node fs "" []) p) =
                       where
                         nps = concat $ List.concatMap tryExtendZ gs
                         tryExtendZ g = [ extendZ l (ZP (Node (head result) "" []) (Step fs therule p [] []) )
-                          | (therule,result) <- head $ (head.unsafeRules $ l) (histOf zp) fs g ]
+                          | (therule,result) <- r (histOf zp) fs g ]
 extendZ _ (ZP Proved p) = [ZP Proved p]
 extendZ _ (ZP (Node _ (_:_) []) _ )= error"cannot have rules and no children"
 extendZ _ (ZP (Node fs r@(_:_) xs@(_:_)) p )= [ZP (Node fs r xs) p]
