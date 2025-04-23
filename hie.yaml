@@ -1,19 +1,19 @@
 cradle:
   stack:
     - path: "./lib"
-      component: "report:lib"
+      component: "Sequent-Calculus-With-Zippers:lib"
 
     - path: "./exec/Main.hs"
-      component: "report:exe:myprogram"
+      component: "Sequent-Calculus-With-Zippers:exe:myprogram"
 
-    - path: "./exec/Paths_report.hs"
-      component: "report:exe:myprogram"
+    - path: "./exec/Paths_Sequent-Calculus-With-Zippers.hs"
+      component: "Sequent-Calculus-With-Zippers:exe:myprogram"
 
     - path: "./test"
-      component: "report:test:Test"
+      component: "Sequent-Calculus-With-Zippers:test:Test"
 
     - path: "./bench/bench.hs"
-      component: "report:bench:Bench"
+      component: "Sequent-Calculus-With-Zippers:bench:Bench"
 
     - path: "./bench/memory.hs"
-      component: "report:bench:Memory"
+      component: "Sequent-Calculus-With-Zippers:bench:Memory"

@@ -1,4 +1,4 @@
-name: report
+name: Sequent-Calculus-With-Zippers
 version: 0.1.0.0
 synopsis: Haskell code for master thesis
 description: See mol thesis Sequent Calculus With Zippers
@@ -29,14 +29,14 @@ executables:
     main: Main.hs
     source-dirs: exec
     dependencies:
-      - report
+      - Sequent-Calculus-With-Zippers
 
 tests:
   Test:
     main: Test.hs
     source-dirs: test
     dependencies:
-      - report
+      - Sequent-Calculus-With-Zippers
       - QuickCheck
       - hspec
 
@@ -51,7 +51,7 @@ benchmarks:
       - criterion
       - directory
       - scientific
-      - report
+      - Sequent-Calculus-With-Zippers
       - split
       - vector
   Memory:
@@ -60,5 +60,5 @@ benchmarks:
     main: memory.hs
     dependencies:
       - base >= 4.8 && < 5
-      - report
+      - Sequent-Calculus-With-Zippers
       - weigh
