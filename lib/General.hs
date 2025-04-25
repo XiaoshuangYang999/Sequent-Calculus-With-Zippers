@@ -69,14 +69,12 @@ isApplicable :: History f -> Sequent f -> Either f f -> Rule f -> Bool
 isApplicable hs fs f r = not . null $ r hs fs f
 
 -- | A Logic for a formula type `f`.
-data Logic f = Log
-  { neg         :: f -> f
-  , bot         :: f
-  , isAtom      :: f -> Bool
-  , isAxiom     :: Sequent f -> Bool
-  , safeRule    :: Rule f
-  , unsafeRules :: [Rule f]
-  }
+data Logic f = Log { neg         :: f -> f
+                   , bot         :: f
+                   , isAtom      :: f -> Bool
+                   , isAxiom     :: Sequent f -> Bool
+                   , safeRule    :: Rule f
+                   , unsafeRules :: [Rule f] }
 
 -- * Tree Proofs
 
@@ -90,9 +88,9 @@ hpSnd (HP (_, pf)) = pf
 
 -- * Zip Proofs
 
-data ZipPath f = Top | Step (Sequent f) RuleName (ZipPath f) [Proof f] [Proof f]
-
 data ZipProof f = ZP (Proof f) (ZipPath f)
+
+data ZipPath f = Top | Step (Sequent f) RuleName (ZipPath f) [Proof f] [Proof f]
 
 instance HasHistory ZipPath where
   histOf :: ZipPath f -> History f

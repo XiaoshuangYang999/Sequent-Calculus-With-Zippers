@@ -7,14 +7,12 @@ import General
 import Basics
 
 intui :: Logic FormP
-intui = Log
-  { neg         = negP
-  , bot         = BotP
-  , isAtom      = isatomP
-  , isAxiom     = isAxiomP
-  , safeRule    = replaceRuleIPLsafe safeIPL
-  , unsafeRules = [replaceRuleIPLunsafe unsafeIPL]
-  }
+intui = Log { neg         = negP
+            , bot         = BotP
+            , isAtom      = isatomP
+            , isAxiom     = isAxiomP
+            , safeRule    = replaceRuleIPLsafe safeIPL
+            , unsafeRules = [replaceRuleIPLunsafe unsafeIPL] }
 
 -- | Safe rules
 safeIPL :: Either FormP FormP -> [(RuleName,[Sequent FormP])]
