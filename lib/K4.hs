@@ -1,6 +1,5 @@
 module K4 where
 
-import Basics
 import General
 import qualified Data.Set as Set
 
@@ -11,7 +10,7 @@ kfour = Log
   , isAtom      = isatomM
   , isAxiom     = isAxiomM
   , safeRule    = replaceRule safeML
-  , unsafeRules = [kbox,fourbox]
+  , unsafeRules = [fourrule]
   }
 
 -- | Propositional rules for Modal Logic.
@@ -24,29 +23,20 @@ safeML (Right (DisM f g)) = [("Rv", [Set.insert (Right g)    $ Set.singleton (Ri
 safeML (Right (ImpM f g)) = [("R→", [Set.insert (Right g)    $ Set.singleton (Left f)]  )]
 safeML _                  = []
 
--- | The K box rule.
-kbox :: Rule FormM
-kbox _ fs (Right (Box f)) = Set.toList $ Set.map (func f) $ Set.powerSet . removeBoxLeft $ fs
-  where
-  func :: FormM -> Sequent FormM -> (RuleName,[Sequent FormM])
-  func g seqs = ("K", [Set.insert (Right g) seqs])
-kbox _ _ _ = []
-
 -- | The 4 box rule.
-fourbox :: Rule FormM
-fourbox _ fs (Right (Box f)) = Set.toList $ Set.map (func f) $ Set.powerSet $ Set.filter isLeftBox fs
-  where
-  func :: FormM -> Sequent FormM -> (RuleName,[Sequent FormM])
-  func g seqs = ("4", [Set.insert (Right g) seqs])
-fourbox _ _ _ = []
+fourrule :: Rule FormM
+fourrule hs fs (Right (Box f)) = concatMap (loopCheckMap hs) ss where
+  ss = Set.map (\s -> Set.unions [Set.singleton (Right f), s, Set.map fromBox s]) ss'
+  ss' = Set.powerSet $ Set.filter isLeftBox fs
+fourrule _ _ _ = [] 
 
-removeBoxLeft :: Sequent FormM -> Sequent FormM
-removeBoxLeft  = setComprehension isLeftBox fromBox
+loopCheckMap :: History FormM -> Sequent FormM -> [(RuleName,[Sequent FormM])]
+loopCheckMap hs seqs = [("4", [seqs]) | seqs `notElem` hs]
 
 isLeftBox :: Either FormM FormM -> Bool
 isLeftBox (Left (Box _)) = True
 isLeftBox _              = False
-  
+
 fromBox :: Either FormM FormM -> Either FormM FormM
 fromBox (Left (Box g)) = Left g
 fromBox g = g

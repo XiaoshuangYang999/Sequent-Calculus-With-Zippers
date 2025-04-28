@@ -4,10 +4,9 @@ module MForm where
 import General
 import PForm
 import Data.List as List
--- for ghci test purpose
+-- Added temporarily for ghci test purpose
 import K
 import K4
--- import K4box
 import S4
 
 a1,b1,c1,d1,e1 :: FormM
@@ -44,6 +43,9 @@ lobaxiom = ImpM (Box (ImpM (Box a1) a1)) (Box a1)
 consistency :: FormM
 consistency = negM . Box $ BotM
 
+-- Holds in T, S4
+density :: FormM
+density = ImpM (Box (Box a1)) (Box a1)
 
 -- * For benchmarks
 boxes :: Int -> FormM -> FormM
@@ -56,9 +58,11 @@ boxesTop n = boxes n topM
 boxesBot :: Int -> FormM
 boxesBot n = boxes n BotM
 
+-- Holds in K4, S4
 boxToMoreBox :: Int -> FormM
 boxToMoreBox n = ImpM (boxes n a1) (boxes (n + 1) a1)
 
+-- Holds in S4
 boxToFewerBox :: Int -> FormM
 boxToFewerBox n = ImpM (boxes (n + 1) a1) (boxes n a1)
 

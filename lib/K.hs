@@ -11,7 +11,7 @@ k = Log
   , isAtom      = isatomM
   , isAxiom     = isAxiomM
   , safeRule    = replaceRule safeML
-  , unsafeRules = [kbox]
+  , unsafeRules = [krule]
   }
 
 -- | Propositional rules for Modal Logic.
@@ -24,9 +24,9 @@ safeML (Right (DisM f g)) = [("Rv", [Set.insert (Right g)    $ Set.singleton (Ri
 safeML (Right (ImpM f g)) = [("R→", [Set.insert (Right g)    $ Set.singleton (Left f)]  )]
 safeML _                  = []
 
--- | The K box rule.
-kbox :: Rule FormM
-kbox _ fs (Right (Box f)) = Set.toList $ Set.map (func f) $ Set.powerSet . removeBoxLeft $ fs where
+-- | The K rule.
+krule :: Rule FormM
+krule _ fs (Right (Box f)) = Set.toList $ Set.map (func f) $ Set.powerSet . removeBoxLeft $ fs where
   removeBoxLeft :: Sequent FormM -> Sequent FormM
   removeBoxLeft  = setComprehension isLeftBox fromBox
   isLeftBox :: Either FormM FormM -> Bool
@@ -37,4 +37,4 @@ kbox _ fs (Right (Box f)) = Set.toList $ Set.map (func f) $ Set.powerSet . remov
   fromBox g = g
   func :: FormM -> Sequent FormM -> (RuleName,[Sequent FormM])
   func g seqs = ("K", [Set.insert (Right g) seqs])
-kbox _ _ _ = []
+krule _ _ _ = []

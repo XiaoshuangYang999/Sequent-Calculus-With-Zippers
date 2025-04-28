@@ -11,7 +11,7 @@ sfour = Log
   , isAtom      = isatomM
   , isAxiom     = isAxiomM
   , safeRule    = replaceRule safeML
-  , unsafeRules = [kbox,fourbox,tbox]
+  , unsafeRules = [fourrule,trule]
   }
 
 -- | Propositional rules for Modal Logic.
@@ -24,26 +24,20 @@ safeML (Right (DisM f g)) = [("Rv", [Set.insert (Right g)    $ Set.singleton (Ri
 safeML (Right (ImpM f g)) = [("R→", [Set.insert (Right g)    $ Set.singleton (Left f)]  )]
 safeML _                  = []
 
--- | The K box rule.
-kbox :: Rule FormM
-kbox _ fs (Right (Box f)) = Set.toList $ Set.map (func f) $ Set.powerSet . removeBoxLeft $ fs 
-  where
-  func :: FormM -> Sequent FormM -> (RuleName,[Sequent FormM])
-  func g seqs = ("K", [Set.insert (Right g) seqs])
-kbox _ _ _ = []
-
 -- | The 4 box rule.
-fourbox :: Rule FormM
-fourbox _ fs (Right (Box f)) = Set.toList $ Set.map (func f) $ Set.powerSet $ Set.filter isLeftBox fs
-  where
-  func :: FormM -> Sequent FormM -> (RuleName,[Sequent FormM])
-  func g seqs = ("4", [Set.insert (Right g) seqs])
-fourbox _ _ _ = []
+fourrule :: Rule FormM
+fourrule hs fs (Right (Box f)) = concatMap (loopCheckMap hs) ss where
+  ss = Set.map (\s -> Set.unions [Set.singleton (Right f), s, Set.map fromBox s]) ss'
+  ss' = Set.powerSet $ Set.filter isLeftBox fs
+fourrule _ _ _ = [] 
 
--- | The T box rule. need loop check here
-tbox :: Rule FormM
-tbox hs fs (Left (Box f)) = [("T", [Set.insert (Left f) fs]) | Set.insert (Left f) fs `notElem` hs]
-tbox _ _ _ = []
+-- | The T box rule.
+trule :: Rule FormM
+trule hs fs (Left (Box f)) = [("T", [Set.insert (Left f) fs]) | Set.insert (Left f) fs `notElem` hs]
+trule _ _ _ = []
+
+loopCheckMap :: History FormM -> Sequent FormM -> [(RuleName,[Sequent FormM])]
+loopCheckMap hs seqs = [("4", [seqs]) | seqs `notElem` hs]
 
 removeBoxLeft :: Sequent FormM -> Sequent FormM
 removeBoxLeft  = setComprehension isLeftBox fromBox
@@ -51,7 +45,7 @@ removeBoxLeft  = setComprehension isLeftBox fromBox
 isLeftBox :: Either FormM FormM -> Bool
 isLeftBox (Left (Box _)) = True
 isLeftBox _              = False
-  
+
 fromBox :: Either FormM FormM -> Either FormM FormM
 fromBox (Left (Box g)) = Left g
 fromBox g = g
