@@ -1,10 +1,11 @@
-module ML (modal) where
+module K where
 
+import Basics
 import General
 import qualified Data.Set as Set
 
-modal :: Logic FormM
-modal = Log
+k :: Logic FormM
+k = Log
   { neg         = negM
   , bot         = BotM
   , isAtom      = isatomM
@@ -27,7 +28,7 @@ safeML _                  = []
 kbox :: Rule FormM
 kbox _ fs (Right (Box f)) = Set.toList $ Set.map (func f) $ Set.powerSet . removeBoxLeft $ fs where
   removeBoxLeft :: Sequent FormM -> Sequent FormM
-  removeBoxLeft xs = Set.map fromBox $ Set.filter isLeftBox xs
+  removeBoxLeft  = setComprehension isLeftBox fromBox
   isLeftBox :: Either FormM FormM -> Bool
   isLeftBox (Left (Box _)) = True
   isLeftBox _              = False
@@ -35,5 +36,5 @@ kbox _ fs (Right (Box f)) = Set.toList $ Set.map (func f) $ Set.powerSet . remov
   fromBox (Left (Box g)) = Left g
   fromBox g = g
   func :: FormM -> Sequent FormM -> (RuleName,[Sequent FormM])
-  func g seqs = ("K☐", [Set.insert (Right g) seqs])
+  func g seqs = ("K", [Set.insert (Right g) seqs])
 kbox _ _ _ = []

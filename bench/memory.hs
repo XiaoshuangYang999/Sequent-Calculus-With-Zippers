@@ -6,7 +6,9 @@ import General ( isProvableT, isProvableZ, FormM, FormP, Logic )
 import CPL
 import IPL
 import ML hiding (func)
-import Example
+import K4
+import PForm
+import MForm
 
 
 main :: IO ()

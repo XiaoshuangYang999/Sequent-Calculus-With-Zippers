@@ -17,7 +17,10 @@ import General
 import CPL
 import IPL
 import ML
-import Example
+import K4
+import PForm
+import MForm
+
 
 -- | 8 propositional formula generators
 propFormulas :: [(String, Int -> FormP)]

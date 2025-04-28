@@ -128,16 +128,21 @@ extendT l pt@(HP (h, Node fs "" [])) =
   -- The logic has no unsafe rule -> CPL: -- FIXME rephrase
   (_   ,_,Nothing,[])  -> [HP (h, Node fs "" [])]
   -- The logic has an unsafe rule -> IPL, K:
-  (_   ,_,Nothing,r:_) -> case checkEmpty $ Set.filter (\g -> isApplicable h fs g r) fs of
-        Nothing -> [HP (h, Node fs "" [])] -- No applicable formulas in fs
-        Just gs ->  if any isClosedPfT nps -- fs contains applicable formulas
+  (_   ,_,Nothing,rs@(_:_)) -> List.concatMap (applyRule l pt) rs
+    -- We used to have at most one unsafe rule for each logic, but now there can be multiple
+    where
+      applyRule :: (Eq f, Show f, Ord f) => Logic f -> ProofWithH f -> Rule f -> [ProofWithH f]
+      applyRule sl pw@(HP (hs, Node xs "" [])) r = case checkEmpty $ Set.filter (\g -> isApplicable hs xs g r) xs of
+        Nothing -> [HP (hs, Node xs "" [])] -- No applicable formulas in fs
+        Just gs ->  if any isClosedPfT nps -- xs contains applicable formulas
                       then List.take 1 (List.filter isClosedPfT nps)
-                      else [HP (h, Node fs "" [])]
+                      else [HP (hs, Node xs "" [])]
           where
             nps = concat $ List.concatMap tryExtendT gs
-            tryExtendT g = [ List.map (\pwh -> HP (h, Node fs therule [hpSnd pwh]))
-                                $ extendT l (HP (fs : h, Node (head result) "" []))
-                           | (therule,result) <- r (histOf pt) fs g ]
+            tryExtendT g = [ List.map (\pwh -> HP (hs, Node xs therule [hpSnd pwh]))
+                                $ extendT sl (HP (xs : hs, Node (head result) "" []))
+                           | (therule,result) <- r (histOf pw) xs g ]
+      applyRule _ _ _ = []
 -- just for pattern matching
 extendT l (HP (h,Node fs r@(_:_) xs@(_:_))) = -- FIXME can we get rid of this?
   [ HP (h,Node fs r $ List.map hpSnd nfs)
@@ -217,17 +222,22 @@ extendZ l zp@(ZP (Node fs "" []) p) =
         -- Whenever a dead end is found, stop the proving process
   (_ ,_  ,Nothing ,[])    -> [ZP (Node fs "" []) p]
         -- Has an unsafe rule
-  (_,_   ,Nothing ,r:_)   -> case  checkEmpty $ Set.filter (\g -> isApplicable (histOf zp) fs g r) fs of
+  (_,_   ,Nothing ,rs@(_:_)) -> List.concatMap (applyRule l zp) rs
+    -- We used to have at most one unsafe rule for each logic, but now there can be multiple
+    where
+      applyRule :: (Eq f, Ord f) => Logic f -> ZipProof f -> Rule f -> [ZipProof f]
+      applyRule sl zp'@(ZP (Node xs "" []) p') r = case  checkEmpty $ Set.filter (\g -> isApplicable (histOf zp') xs g r) xs of
                 -- Not applicable
-                Nothing -> [ZP (Node fs "" []) p]
+                Nothing -> [ZP (Node xs "" []) p']
                 -- Find a list of formulas to apply
                 Just gs -> if any isClosedZP nps
                             then List.take 1 (List.filter isClosedZP nps)
-                            else [ZP (Node fs "" []) p]
+                            else [ZP (Node xs "" []) p']
                       where
                         nps = concat $ List.concatMap tryExtendZ gs
-                        tryExtendZ g = [ extendZ l (ZP (Node (head result) "" []) (Step fs therule p [] []) )
-                          | (therule,result) <- r (histOf zp) fs g ]
+                        tryExtendZ g = [ extendZ sl (ZP (Node (head result) "" []) (Step xs therule p' [] []) )
+                          | (therule,result) <- r (histOf zp') xs g ]
+      applyRule _ _ _ = []
 extendZ _ (ZP Proved p) = [ZP Proved p]
 extendZ _ (ZP (Node _ (_:_) []) _ )= error"cannot have rules and no children"
 extendZ _ (ZP (Node fs r@(_:_) xs@(_:_)) p )= [ZP (Node fs r xs) p]

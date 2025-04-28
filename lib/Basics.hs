@@ -64,3 +64,7 @@ checkEmpty :: Set a -> Maybe (Set a)
 checkEmpty xs
   | Set.null xs = Nothing
   | otherwise   = Just xs
+
+-- First function is the filter function, second function is the mapping function
+setComprehension :: (Ord a, Ord b) => (a -> Bool) -> (a -> b) -> Set a -> Set b
+setComprehension f g xs = Set.map g (Set.filter f xs)
