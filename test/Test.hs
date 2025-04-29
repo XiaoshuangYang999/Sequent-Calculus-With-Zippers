@@ -180,7 +180,7 @@ main = hspec $ do
       it "boxToMoreBox 4" $ isProvableZ sfour (boxToMoreBox 4)
       it "boxToFewerBox 4" $ isProvableZ sfour (boxToFewerBox 4)
     describe "not.S4.isProvableZ" $ do
-      it "Lob axiom" $ not $ isProvableZ sfour lobaxiom    
+      it "Lob axiom" $ not $ isProvableZ sfour lobaxiom
 
     describe "S4.isProvableT" $ do
       it "K axiom" $ isProvableT sfour kaxiom
@@ -192,7 +192,7 @@ main = hspec $ do
     describe "not.S4.isProvableT" $ do
       it "Lob axiom" $ not $ isProvableT sfour lobaxiom
 
- -- Set a time limit.
+  -- Set a time limit.
   -- Test cases will be discarded if they take more than 5 seconds.
   let limit = 5 * 1000000 -- in microseconds
 
