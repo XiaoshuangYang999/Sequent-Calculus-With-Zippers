@@ -9,7 +9,8 @@ classical = Log { neg         = negP
                 , isAtom      = isatomP
                 , isAxiom     = isAxiomP
                 , safeRule    = replaceRule safeCPL
-                , unsafeRules = [] }
+                , unsafeRules = []
+                , allowCycle = False }
 
 safeCPL :: Either FormP FormP -> [(RuleName,[Sequent FormP])]
 safeCPL (Left (ConP f g))   = [("L∧", [Set.insert (Left g)     $ Set.singleton (Left f)]  )]

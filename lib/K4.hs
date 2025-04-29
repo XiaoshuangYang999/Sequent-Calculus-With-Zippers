@@ -11,6 +11,7 @@ kfour = Log
   , isAxiom     = isAxiomM
   , safeRule    = replaceRule safeML
   , unsafeRules = [fourrule]
+  , allowCycle = False
   }
 
 -- | Propositional rules for Modal Logic.

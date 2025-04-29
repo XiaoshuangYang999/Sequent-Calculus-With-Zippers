@@ -74,7 +74,8 @@ data Logic f = Log { neg         :: f -> f
                    , isAtom      :: f -> Bool
                    , isAxiom     :: Sequent f -> Bool
                    , safeRule    :: Rule f
-                   , unsafeRules :: [Rule f] }
+                   , unsafeRules :: [Rule f]
+                   , allowCycle  :: Bool }
 
 -- * Tree Proofs
 
@@ -114,19 +115,21 @@ extendT  :: (Eq f, Show f, Ord f) => Logic f -> ProofWithH f -> [ProofWithH f]
 extendT l pt@(HP (h, Node fs "" [])) =
   case ( Left (bot l) `Set.member` fs
        , isAxiom l fs
+       , allowCycle l && fs `elem` h
        , Set.lookupMin $ Set.filter (\g -> isApplicable h fs g (safeRule l)) fs
        , unsafeRules l ) of
-  (True, _   , _     ,_ ) -> [HP (h, Node fs "L⊥" [Proved])] -- Left side contains ⊥.
-  (_   , True, _     ,_ ) -> [HP (h, Node fs "Ax" [Proved])] -- We have an axiom.
-  (_   , _   , Just f,_ ) -> -- The safe rule can be applied
+  (True, _   , _   , _      , _       ) -> [HP (h, Node fs "L⊥" [Proved])] -- Left side contains ⊥.
+  (_   , True, _   , _      , _       ) -> [HP (h, Node fs "Ax" [Proved])] -- We have an axiom.
+  (_   , _   , True, _      , _       ) -> [HP (h, Node fs "Cycle" [Proved])]
+  (_   , _   , _   , Just f , _       ) -> -- The safe rule can be applied
     [ HP (h, Node fs therule (map hpSnd ts) )
     | (therule, result) <- safeRule l h fs f
     , ts <- pickOneOfEach [ extendT l (HP (fs : h, Node nfs "" []))
                           | nfs <- result ] ]
   -- The logic has no unsafe rule -> CPL: -- FIXME rephrase
-  (_   ,_,Nothing,[])  -> [HP (h, Node fs "" [])]
+  (_   , _   , _   , Nothing, []      ) -> [HP (h, Node fs "" [])]
   -- The logic has an unsafe rule -> IPL, K:
-  (_   ,_,Nothing,rs@(_:_)) -> List.concatMap (applyRule l pt) rs
+  (_   , _   , _   , Nothing, rs@(_:_)) -> List.concatMap (applyRule l pt) rs
     -- We used to have at most one unsafe rule for each logic, but now there can be multiple
     where
       applyRule :: (Eq f, Show f, Ord f) => Logic f -> ProofWithH f -> Rule f -> [ProofWithH f]
@@ -207,20 +210,22 @@ extendZ  :: (Ord f,Eq f) => Logic f -> ZipProof f -> [ZipProof f]
 extendZ l zp@(ZP (Node fs "" []) p) =
   case ( Left (bot l) `Set.member` fs
        , isAxiom l fs
+       , allowCycle l && fs `elem` histOf zp
        , Set.lookupMin $ Set.filter (\g -> isApplicable (histOf zp) fs g (safeRule l)) fs
        , unsafeRules l) of
   -- Switch the path if the current sequent is closed
-  (True,_,_  ,_ )    -> extendZ l (switch (ZP (Node fs "L⊥" [Proved]) p))
-  (_,True,_  ,_ )    -> extendZ l (switch (ZP (Node fs "Ax" [Proved]) p))
+  (True, _   , _   , _      , _       )    -> extendZ l (switch (ZP (Node fs "L⊥"    [Proved]) p))
+  (_   , True, _   , _      , _       )    -> extendZ l (switch (ZP (Node fs "Ax"    [Proved]) p))
+  (_   , _   , True, _      , _       )    -> extendZ l (switch (ZP (Node fs "Cycle" [Proved]) p))
   -- Find a safe rule to use
-  (_ ,_  ,Just f,_)     -> extendZ l (move_down $ ZP (Node fs therule ts) p) where
+  (_   , _   , _   , Just f , _       )    -> extendZ l (move_down $ ZP (Node fs therule ts) p) where
             (therule,result) = head $ safeRule l (histOf zp) fs f
             ts = [ Node nfs "" []| nfs <- result]
   -- Check if there is unsafe rule
         -- Whenever a dead end is found, stop the proving process
-  (_ ,_  ,Nothing ,[])    -> [ZP (Node fs "" []) p]
+  (_   , _   , _   , Nothing, []      )    -> [ZP (Node fs "" []) p]
         -- Has an unsafe rule
-  (_,_   ,Nothing ,rs@(_:_)) -> List.concatMap (applyRule l zp) rs
+  (_   , _   , _   , Nothing, rs@(_:_))    -> List.concatMap (applyRule l zp) rs
     -- We used to have at most one unsafe rule for each logic, but now there can be multiple
     where
       applyRule :: (Eq f, Ord f) => Logic f -> ZipProof f -> Rule f -> [ZipProof f]

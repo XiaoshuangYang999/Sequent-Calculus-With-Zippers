@@ -12,7 +12,8 @@ intui = Log { neg         = negP
             , isAtom      = isatomP
             , isAxiom     = isAxiomP
             , safeRule    = replaceRuleIPLsafe safeIPL
-            , unsafeRules = [replaceRuleIPLunsafe unsafeIPL] }
+            , unsafeRules = [replaceRuleIPLunsafe unsafeIPL]
+            , allowCycle = False }
 
 -- | Safe rules
 safeIPL :: Either FormP FormP -> [(RuleName,[Sequent FormP])]

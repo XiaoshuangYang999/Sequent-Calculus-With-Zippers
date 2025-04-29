@@ -12,6 +12,7 @@ k = Log
   , isAxiom     = isAxiomM
   , safeRule    = replaceRule safeML
   , unsafeRules = [krule]
+  , allowCycle = False
   }
 
 -- | Propositional rules for Modal Logic.

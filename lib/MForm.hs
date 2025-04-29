@@ -7,7 +7,8 @@ import Data.List as List
 -- Added temporarily for ghci test purpose
 -- import K
 -- import K4
--- import S4
+-- import S4 
+-- import GL
 
 a1,b1,c1,d1,e1 :: FormM
 [a1,b1,c1,d1,e1] = map AtM ['a','b','c','d','e']
