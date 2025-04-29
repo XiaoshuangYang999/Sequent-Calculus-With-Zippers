@@ -1,9 +1,10 @@
-{-# LANGUAGE InstanceSigs,TypeSynonymInstances #-}
+{-# LANGUAGE InstanceSigs,TypeSynonymInstances, DeriveGeneric #-}
 
 module General where
 import Basics
 import Data.GraphViz
 import Data.GraphViz.Types.Monadic hiding ((-->))
+import GHC.Generics
 import Test.QuickCheck
 import Data.List as List
 import Data.Set (Set)
@@ -302,7 +303,7 @@ substituteP (ImpP f g) x t = ImpP (substituteP f x t) (substituteP g x t)
 -- * The Modal Language
 
 data FormM = BotM | AtM Atom | ConM FormM FormM | DisM FormM FormM | ImpM FormM FormM | Box FormM
-  deriving (Eq,Ord)
+  deriving (Eq,Ord,Generic)
 
 isatomM :: FormM -> Bool
 isatomM (AtM _) = True
@@ -332,7 +333,7 @@ instance (Show FormM) where
   show (ConM f g) = "(" ++ show f ++ " ∧ " ++ show g ++ ")"
   show (DisM f g) = "(" ++ show f ++ " v " ++ show g ++ ")"
   show (ImpM f g) = "(" ++ show f ++ " → " ++ show g ++ ")"
-  show (Box f)   = "(" ++ " ☐ " ++ show f ++ ")"
+  show (Box f)    = "☐" ++ show f
 
 instance Arbitrary FormM where
   arbitrary = sized genForm where
@@ -346,6 +347,7 @@ instance Arbitrary FormM where
       , ConM <$> genForm (n `div` factor) <*> genForm (n `div` factor)
       , Box <$> genForm (n `div` factor)
       ]
+  shrink = nub . genericShrink
 
 -- conjunction on lists
 conM :: [FormM] -> FormM
