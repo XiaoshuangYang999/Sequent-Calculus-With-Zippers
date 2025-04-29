@@ -12,16 +12,16 @@ intui = Log {  safeRules    = [leftBotP, isAxiomP,replaceRuleIPLsafe safeIPL]
 
 -- | Safe rules
 safeIPL :: Either FormP FormP -> [(RuleName,[Sequent FormP])]
-safeIPL (Left (ConP f g))  = [("L∧", [Set.insert (Left g)     $ Set.singleton (Left f)]  )]
-safeIPL (Left (DisP f g))  = [("Lv", [Set.singleton (Left f)  , Set.singleton (Left g)]  )] -- branch
-safeIPL (Right (ConP f g)) = [("R∧", [Set.singleton (Right f) , Set.singleton (Right g)] )] -- branch
-safeIPL (Right (DisP f g)) = [("Rv", [Set.insert (Right g)    $ Set.singleton (Right f)] )]
-safeIPL (Left (ImpP f g))  = [("L→", [Set.singleton (Left g)  , Set.singleton (Right f)] )] -- branch
+safeIPL (Left (ConP f g))  = [("L∧", [Set.fromList [Left g, Left f]])]
+safeIPL (Left (DisP f g))  = [("Lv", map Set.singleton [Left f, Left g])]
+safeIPL (Left (ImpP f g))  = [("L→", map Set.singleton [Left g, Right f])]
+safeIPL (Right (ConP f g)) = [("R∧", map Set.singleton [Right f, Right g])]
+safeIPL (Right (DisP f g)) = [("Rv", [Set.fromList [Right g, Right f]])]
 safeIPL _                  = []
 
 -- | The R-> rule.
 unsafeIPL :: Either FormP FormP -> [(RuleName,[Sequent FormP])]
-unsafeIPL (Right (ImpP f g)) = [("R→", [Set.insert (Right g) $ Set.singleton (Left f)])]
+unsafeIPL (Right (ImpP f g)) = [("R→", [Set.fromList [Right g, Left f]])]
 unsafeIPL  _                 = []
 
 -- | Is this sequent saturated?
