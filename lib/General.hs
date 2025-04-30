@@ -155,8 +155,8 @@ proveprintT l f = if isProvableT l f
 provePdfT :: (Ord f,Show f, Eq f) => Logic f -> f -> IO FilePath
 provePdfT l f= pdf $ proveprintT l f
 
-
 -- * Zipper-based prover
+
 instance TreeLike ZipProof where
   zsingleton x                             = ZP (Node (Set.singleton (Right x)) Nothing) Top
   move_left (ZP c (Step s r p (x:xs) ys))  = ZP x (Step s r p xs (c:ys))
@@ -194,7 +194,6 @@ isClosedZP :: Eq f => ZipProof f -> Bool
 isClosedZP (ZP fs Top) = isClosedPf fs
 isClosedZP (ZP fs p) = isClosedPf fs &&  (isClosedZP . switch $ ZP fs p)
 
-
 extendZ  :: (Ord f,Eq f) => Logic f -> ZipProof f -> [ZipProof f]
 extendZ l zp@(ZP (Node fs Nothing) p) =
   case ( List.filter (isApplicableRule (histOf zp) fs) (safeRules l)
@@ -222,7 +221,6 @@ extendZ l zp@(ZP (Node fs Nothing) p) =
                          | (therule,result) <- r (histOf zp) fs g ]
 
 extendZ _ zp@(ZP (Node _ (Just _ )) _) = [zp] -- needed after switch
-
 
 proveZ :: (Eq f, Ord f) => Logic f -> f -> [Proof f]
 proveZ l f = List.map fromZip $ extendZ l (startForZ f)
