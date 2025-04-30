@@ -4,15 +4,12 @@ import General
 import qualified Data.Set as Set
 
 gl :: Logic FormM
-gl = Log
-  { neg         = negM
-  , bot         = BotM
-  , isAtom      = isatomM
-  , isAxiom     = isAxiomM
-  , safeRule    = replaceRule safeML
-  , unsafeRules = [fourrule]
-  , allowCycle  = True
-  }
+gl = Log { safeRules    = [leftBotM, isAxiomM, isCycle, replaceRule safeML]
+         , unsafeRules = [fourrule]
+         }
+
+isCycle :: Rule FormM
+isCycle h fs _ = [("Cycle", [Proved]) | fs `elem` h]
 
 -- | Propositional rules for Modal Logic.
 safeML :: Either FormM FormM -> [(RuleName,[Sequent FormM])]
@@ -31,8 +28,8 @@ fourrule _ fs (Right (Box f)) = concatMap func ss where
   ss' = Set.powerSet $ Set.filter isLeftBox fs
 fourrule _ _ _ = [] 
 
-func :: Sequent FormM -> [(RuleName,[Sequent FormM])]
-func seqs = [("4", [seqs])]
+func :: Sequent FormM -> [(RuleName,[Proof FormM])]
+func seqs = [("4", [Node seqs "" []])]
 
 isLeftBox :: Either FormM FormM -> Bool
 isLeftBox (Left (Box _)) = True

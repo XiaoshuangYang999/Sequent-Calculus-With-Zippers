@@ -5,15 +5,9 @@ import General
 import qualified Data.Set as Set
 
 k :: Logic FormM
-k = Log
-  { neg         = negM
-  , bot         = BotM
-  , isAtom      = isatomM
-  , isAxiom     = isAxiomM
-  , safeRule    = replaceRule safeML
-  , unsafeRules = [krule]
-  , allowCycle = False
-  }
+k = Log { safeRules    = [leftBotM, isAxiomM,replaceRule safeML]
+        , unsafeRules = [krule]
+        }
 
 -- | Propositional rules for Modal Logic.
 safeML :: Either FormM FormM -> [(RuleName,[Sequent FormM])]
@@ -36,6 +30,6 @@ krule _ fs (Right (Box f)) = Set.toList $ Set.map (func f) $ Set.powerSet . remo
   fromBox :: Either FormM FormM -> Either FormM FormM
   fromBox (Left (Box g)) = Left g
   fromBox g = g
-  func :: FormM -> Sequent FormM -> (RuleName,[Sequent FormM])
-  func g seqs = ("K", [Set.insert (Right g) seqs])
+  func :: FormM -> Sequent FormM -> (RuleName,[Proof FormM])
+  func g seqs = ("K", [Node (Set.insert (Right g) seqs) "" []])
 krule _ _ _ = []

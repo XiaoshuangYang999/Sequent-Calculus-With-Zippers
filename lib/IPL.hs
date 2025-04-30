@@ -7,13 +7,8 @@ import General
 import Basics
 
 intui :: Logic FormP
-intui = Log { neg         = negP
-            , bot         = BotP
-            , isAtom      = isatomP
-            , isAxiom     = isAxiomP
-            , safeRule    = replaceRuleIPLsafe safeIPL
-            , unsafeRules = [replaceRuleIPLunsafe unsafeIPL]
-            , allowCycle = False }
+intui = Log {  safeRules    = [leftBotP, isAxiomP,replaceRuleIPLsafe safeIPL]
+            ,  unsafeRules = [replaceRuleIPLunsafe unsafeIPL] }
 
 -- | Safe rules
 safeIPL :: Either FormP FormP -> [(RuleName,[Sequent FormP])]
@@ -41,7 +36,7 @@ saturated fs f = case safeIPL f of []              -> True
 replaceRuleIPLsafe :: (Either FormP FormP -> [(RuleName, [Sequent FormP])]) -> Rule FormP
 replaceRuleIPLsafe fun _ fs g =
   [ ( fst . head $ fun g
-    , [ fs `Set.union` newfs | newfs <- snd . head $ fun g] -- not deleting `g` here!
+    , [ Node (fs `Set.union` newfs) "" [] | newfs <- snd . head $ fun g] -- not deleting `g` here!
     )
   | not (saturated fs g) -- additional check
   , not (List.null (fun g)) ]
@@ -54,7 +49,7 @@ applyIPL fs f = List.map (Set.insert f (leftOfSet fs) `Set.union`)
 replaceRuleIPLunsafe :: (Either FormP FormP -> [(RuleName, [Sequent FormP])]) -> Rule FormP
 replaceRuleIPLunsafe fun h fs g =
   [ ( fst . head $ fun g
-    , applyIPL fs g (snd (head (unsafeIPL g)))
+    , [ Node gs "" [] | gs <- applyIPL fs g $ snd . head . unsafeIPL $ g ]
     )
   | not (saturated fs g) -- additional check
   , historyCheck h fs g -- aditional check

@@ -4,13 +4,8 @@ import General
 import qualified Data.Set as Set
 
 classical :: Logic FormP
-classical = Log { neg         = negP
-                , bot         = BotP
-                , isAtom      = isatomP
-                , isAxiom     = isAxiomP
-                , safeRule    = replaceRule safeCPL
-                , unsafeRules = []
-                , allowCycle = False }
+classical = Log { safeRules    = [leftBotP, isAxiomP,replaceRule safeCPL]
+                , unsafeRules = [] }
 
 safeCPL :: Either FormP FormP -> [(RuleName,[Sequent FormP])]
 safeCPL (Left (ConP f g))   = [("L∧", [Set.insert (Left g)     $ Set.singleton (Left f)]  )]

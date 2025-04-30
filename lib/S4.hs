@@ -5,15 +5,8 @@ import General
 import qualified Data.Set as Set
 
 sfour :: Logic FormM
-sfour = Log
-  { neg         = negM
-  , bot         = BotM
-  , isAtom      = isatomM
-  , isAxiom     = isAxiomM
-  , safeRule    = replaceRule safeML
-  , unsafeRules = [fourrule,trule]
-  , allowCycle = False
-  }
+sfour = Log { safeRules    = [leftBotM, isAxiomM,replaceRule safeML]
+            , unsafeRules = [fourrule,trule] }
 
 -- | Propositional rules for Modal Logic.
 safeML :: Either FormM FormM -> [(RuleName,[Sequent FormM])]
@@ -34,11 +27,11 @@ fourrule _ _ _ = []
 
 -- | The T box rule.
 trule :: Rule FormM
-trule hs fs (Left (Box f)) = [("T", [Set.insert (Left f) fs]) | Set.insert (Left f) fs `notElem` hs]
+trule hs fs (Left (Box f)) = [("T", [Node (Set.insert (Left f) fs) "" []]) | Set.insert (Left f) fs `notElem` hs]
 trule _ _ _ = []
 
-loopCheckMap :: History FormM -> Sequent FormM -> [(RuleName,[Sequent FormM])]
-loopCheckMap hs seqs = [("4", [seqs]) | seqs `notElem` hs]
+loopCheckMap :: History FormM -> Sequent FormM -> [(RuleName,[Proof FormM])]
+loopCheckMap hs seqs = [("4", [Node seqs "" [] ]) | seqs `notElem` hs]
 
 removeBoxLeft :: Sequent FormM -> Sequent FormM
 removeBoxLeft  = setComprehension isLeftBox fromBox
