@@ -24,12 +24,11 @@ safeML _                  = []
 -- | The 4 box rule.
 fourrule :: Rule FormM
 fourrule _ fs (Right (Box f)) = concatMap func ss where
+  func :: Sequent FormM -> [(RuleName,[Sequent FormM])]
+  func seqs = [("4", [seqs])]
   ss = Set.map (\s -> Set.unions [Set.singleton (Right f), s, Set.map fromBox s]) ss'
   ss' = Set.powerSet $ Set.filter isLeftBox fs
 fourrule _ _ _ = []
-
-func :: Sequent FormM -> [(RuleName,[Proof FormM])]
-func seqs = [("4", [Node seqs Nothing])]
 
 isLeftBox :: Either FormM FormM -> Bool
 isLeftBox (Left (Box _)) = True

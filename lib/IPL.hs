@@ -36,7 +36,7 @@ saturated fs f = case safeIPL f of []              -> True
 replaceRuleIPLsafe :: (Either FormP FormP -> [(RuleName, [Sequent FormP])]) -> Rule FormP
 replaceRuleIPLsafe fun _ fs g =
   [ ( fst . head $ fun g
-    , [ Node (fs `Set.union` newfs) Nothing | newfs <- snd . head $ fun g] -- not deleting `g` here!
+    , [ fs `Set.union` newfs | newfs <- snd . head $ fun g] -- not deleting `g` here!
     )
   | not (saturated fs g) -- additional check
   , not (List.null (fun g)) ]
@@ -49,7 +49,7 @@ applyIPL fs f = List.map (Set.insert f (leftOfSet fs) `Set.union`)
 replaceRuleIPLunsafe :: (Either FormP FormP -> [(RuleName, [Sequent FormP])]) -> Rule FormP
 replaceRuleIPLunsafe fun h fs g =
   [ ( fst . head $ fun g
-    , [ Node gs Nothing | gs <- applyIPL fs g $ snd . head . unsafeIPL $ g ]
+    , applyIPL fs g $ snd . head . unsafeIPL $ g
     )
   | not (saturated fs g) -- additional check
   , historyCheck h fs g -- aditional check

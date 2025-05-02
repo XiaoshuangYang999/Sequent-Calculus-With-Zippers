@@ -59,13 +59,13 @@ class HasHistory a where
 
 -- | A `Rule` takes the history/branch, current sequent and an active formula.
 -- It returns ways to apply a rule, each resulting in possibly multiple branches.
-type Rule f = History f -> Sequent f -> Either f f -> [(RuleName,[Proof f])]
+type Rule f = History f -> Sequent f -> Either f f -> [(RuleName, [Sequent f])]
 
 -- | A replace rule only takes an active formula.
-replaceRule :: (Eq f,Ord f) => (Either f f -> [(RuleName,[Sequent f])]) -> Rule f
+replaceRule :: (Eq f, Ord f) => (Either f f -> [(RuleName, [Sequent f])]) -> Rule f
 replaceRule fun _ fs g =
   [ ( fst . head $ fun g
-    , [ Node (Set.delete g fs `Set.union` newfs) Nothing
+    , [ Set.delete g fs `Set.union` newfs
       | newfs <- snd . head $ fun g ]
     )
   | not (null (fun g)) ]
@@ -121,8 +121,8 @@ extendT l pt@(HP (h, Node fs Nothing)) =
   (r:_ , _       ) -> -- The safe rule r can be applied
     [ HP (h, Node fs (Just (therule, map hpSnd ts)))
     | (therule, result) <- r h fs f
-    , ts <- pickOneOfEach [ extendT l (HP (fs : h, pf))
-                          | pf <- result ] ]
+    , ts <- pickOneOfEach [ extendT l (HP (fs : h, Node newSeqs Nothing))
+                          | newSeqs <- result ] ]
     where f = Set.elemAt 0 $ Set.filter (\g -> isApplicable h fs g r) fs -- Could be dangerous
   -- The logic has no unsafe rule -> CPL: -- FIXME rephrase
   ([], []      ) -> [HP (h, Node fs Nothing)]
@@ -136,12 +136,9 @@ extendT l pt@(HP (h, Node fs Nothing)) =
           gs = Set.filter (\g -> isApplicable h fs g r) fs
           nps = concat $ List.concatMap tryExtendT gs
           tryExtendT g = [ List.map (\pwh -> HP (h, Node fs (Just (therule, [hpSnd pwh]))))
-                           $ extendT l (HP (fs : h, head result)) -- We don't have branching in any unsaferules
-                         | (therule,result) <- r (histOf pt) fs g ]
+                           $ extendT l (HP (fs : h, Node (head result) Nothing)) -- "head" okay because we don't have branching in any unsaferules
+                         | (therule, result) <- r (histOf pt) fs g ]
 extendT _ (HP (_,Node _ (Just _))) = error "already extended"
--- extendT _ (HP (h,Proved)) = [HP (h,Proved)]
--- extendT _ pt@(HP (_, Node _ (_:_) [])) = [pt] -- rule but no children means already proved.
--- extendT _ (HP (_,Node _ [] (_:_))) = error "children but no rule"
 
 proveT :: (Eq f, Show f,Ord f) => Logic f -> f -> [Proof f]
 proveT l f = List.map hpSnd $ extendT l (startForT f)
@@ -202,10 +199,10 @@ extendZ l zp@(ZP (Node fs Nothing) p) =
   case ( List.filter (isApplicableRule (histOf zp) fs) (safeRules l)
        , unsafeRules l) of
   (r:_ , _       )    ->  let f = Set.elemAt 0 $ Set.filter (\g -> isApplicable (histOf zp) fs g r) fs
-                              (therule,result) = head $ r (histOf zp) fs f
-                              newZP         = ZP (Node fs (Just (therule, result))) p
+                              (therule,results) = head $ r (histOf zp) fs f
+                              newZP         = ZP (Node fs (Just (therule, [Node newSeq Nothing | newSeq <- results]))) p
                               nextZP
-                                | null result = switch    newZP -- no children, i.e. proved
+                                | null results = switch    newZP -- no children, i.e. proved
                                 | otherwise   = move_down newZP
                           in extendZ l nextZP
   -- Check if there is unsafe rule
@@ -220,13 +217,10 @@ extendZ l zp@(ZP (Node fs Nothing) p) =
         where
           gs = Set.filter (\g -> isApplicable (histOf zp) fs g r) fs
           nps = concat $ List.concatMap tryExtendZ gs
-          tryExtendZ g = [ extendZ l (ZP (head result) (Step fs therule p [] []) )
+          tryExtendZ g = [ extendZ l (ZP (Node (head result) Nothing) (Step fs therule p [] []) )
                          | (therule,result) <- r (histOf zp) fs g ]
 
 extendZ _ zp@(ZP (Node _ (Just _ )) _) = [zp] -- needed after switch
--- extendZ _ (ZP Proved _) = error "already proved"
--- extendZ _ zp@(ZP (Node _ (_:_) []) _ ) = [zp] error "rule but no children means already proved"
--- extendZ _ (ZP (Node _ [] (_:_)) _) = error "children but no rules"
 
 
 proveZ :: (Eq f, Ord f) => Logic f -> f -> [Proof f]

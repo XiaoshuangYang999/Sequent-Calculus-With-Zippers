@@ -27,11 +27,11 @@ fourrule _ _ _ = []
 
 -- | The T box rule.
 trule :: Rule FormM
-trule hs fs (Left (Box f)) = [("T", [Node (Set.insert (Left f) fs) Nothing]) | Set.insert (Left f) fs `notElem` hs]
+trule hs fs (Left (Box f)) = [("T", [Set.insert (Left f) fs]) | Set.insert (Left f) fs `notElem` hs]
 trule _ _ _ = []
 
-loopCheckMap :: History FormM -> Sequent FormM -> [(RuleName,[Proof FormM])]
-loopCheckMap hs seqs = [("4", [Node seqs Nothing]) | seqs `notElem` hs]
+loopCheckMap :: History FormM -> Sequent FormM -> [(RuleName,[Sequent FormM])]
+loopCheckMap hs seqs = [("4", [seqs]) | seqs `notElem` hs]
 
 removeBoxLeft :: Sequent FormM -> Sequent FormM
 removeBoxLeft  = setComprehension isLeftBox fromBox
