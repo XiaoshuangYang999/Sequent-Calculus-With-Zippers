@@ -5,7 +5,7 @@ import Weigh
 import General ( isProvableT, isProvableZ, FormM, FormP, Logic )
 import CPL
 import IPL
-import ML hiding (func)
+import K hiding (func)
 import K4
 import PForm
 import MForm
@@ -43,7 +43,7 @@ allCasesP =
 propCasesM :: [(String, Logic FormM, Prover FormM, Int -> FormM, Int)]
 propCasesM =
   [ (intercalate "  " [logicStr, formStr, methodStr, show k, show result], logic, method, formFor', k)
-  | (logicStr, logic)   <- [ ("G3M", modal) ]
+  | (logicStr, logic)   <- [ ("G3M", k) ]
   , (formStr, formFor')  <- propFormulasM
   , (methodStr, method) <- [ ("Tree", isProvableT)
                            , ("Zip ", isProvableZ) ]
@@ -54,7 +54,7 @@ propCasesM =
 boxesCasesM :: [(String, Logic FormM, Prover FormM, Int -> FormM, Int)]
 boxesCasesM =
   [ (intercalate "  " [logicStr, formStr, methodStr, show k, show result], logic, method, formFor', k)
-  | (logicStr, logic)   <- [ ("G3M", modal) ]
+  | (logicStr, logic)   <- [ ("G3M", k) ]
   , (formStr, formFor')  <- boxesFormulasM
   , (methodStr, method) <- [ ("Tree", isProvableT)
                            , ("Zip ", isProvableZ) ]
@@ -65,11 +65,10 @@ boxesCasesM =
 kCasesM :: [(String, Logic FormM, Prover FormM, Int -> FormM, Int)]
 kCasesM =
   [ (intercalate "  " [logicStr, formStr, methodStr, show k, show result], logic, method, formFor', k)
-  | (logicStr, logic)   <- [ ("G3M", modal) ]
+  | (logicStr, logic)   <- [ ("G3M", k) ]
   , (formStr, formFor')  <-kFormulasM
   , (methodStr, method) <- [ ("Tree", isProvableT)
                            , ("Zip ", isProvableZ) ]
   , k <- [20]
   , let result = method logic (formFor' k)
   ]
-

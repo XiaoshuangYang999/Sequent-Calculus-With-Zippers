@@ -16,8 +16,10 @@ import System.Directory
 import General
 import CPL
 import IPL
-import ML
-import K4
+import K
+-- import GL -- TODO
+-- import K4 -- TODO
+-- import S4 -- TODO
 import PForm
 import MForm
 
@@ -53,13 +55,13 @@ modalItems =
   [ (fS ++ "-" ++ lS ++ "-" ++ pS, prover logic . formula)
   | (fS, formula) <- modalFormulas ++ map (fmap (pTom .)) propFormulas
   , (pS, prover) <- [("Zip", isProvableZ), ("Tree", isProvableT)]
-  , (lS, logic) <- [("G3K", modal)] ]
+  , (lS, logic) <- [("G3K", k)] ]
 
 benchMain :: IO ()
 benchMain = defaultMainWith myConfig (map mybench (propItems ++ modalItems)) where
   range = map (10*) [1..10]
   mybench (name,f) = bgroup name $ map (run f) range
-  run f k = bench (show k) $ whnf f k
+  run f n = bench (show n) $ whnf f n
   myConfig = defaultConfig
     { Criterion.Types.csvFile = Just theCSVname
     , Criterion.Types.timeLimit = 10 }
