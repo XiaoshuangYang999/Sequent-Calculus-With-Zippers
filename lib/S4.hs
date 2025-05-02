@@ -1,22 +1,13 @@
-module S4 where
+module S4 (sfour) where
 
-import Basics
-import General
 import qualified Data.Set as Set
 
-sfour :: Logic FormM
-sfour = Log { safeRules    = [leftBotM, isAxiomM,replaceRule safeML]
-            , unsafeRules = [fourrule,trule] }
+import General
+import K (safeML)
 
--- | Propositional rules for Modal Logic.
-safeML :: Either FormM FormM -> [(RuleName,[Sequent FormM])]
-safeML (Left (ConM f g))  = [("L∧", [Set.insert (Left g)     $ Set.singleton (Left f)]  )]
-safeML (Left (DisM f g))  = [("Lv", [Set.singleton (Left f)  , Set.singleton (Left g)]  )]
-safeML (Left (ImpM f g))  = [("L→", [Set.singleton (Left g)  , Set.singleton (Right f)] )]
-safeML (Right (ConM f g)) = [("R∧", [Set.singleton (Right f) , Set.singleton (Right g)] )]
-safeML (Right (DisM f g)) = [("Rv", [Set.insert (Right g)    $ Set.singleton (Right f)] )]
-safeML (Right (ImpM f g)) = [("R→", [Set.insert (Right g)    $ Set.singleton (Left f)]  )]
-safeML _                  = []
+sfour :: Logic FormM
+sfour = Log { safeRules   = [leftBotM, isAxiomM, replaceRule safeML]
+            , unsafeRules = [fourrule, trule] }
 
 -- | The 4 box rule.
 fourrule :: Rule FormM
@@ -32,9 +23,6 @@ trule _ _ _ = []
 
 loopCheckMap :: History FormM -> Sequent FormM -> [(RuleName,[Sequent FormM])]
 loopCheckMap hs seqs = [("4", [seqs]) | seqs `notElem` hs]
-
-removeBoxLeft :: Sequent FormM -> Sequent FormM
-removeBoxLeft  = setComprehension isLeftBox fromBox
 
 isLeftBox :: Either FormM FormM -> Bool
 isLeftBox (Left (Box _)) = True

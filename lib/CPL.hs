@@ -1,10 +1,11 @@
 module CPL (classical) where
 
-import General
 import qualified Data.Set as Set
 
+import General
+
 classical :: Logic FormP
-classical = Log { safeRules    = [leftBotP, isAxiomP,replaceRule safeCPL]
+classical = Log { safeRules   = [leftBotP, isAxiomP, replaceRule safeCPL]
                 , unsafeRules = [] }
 
 safeCPL :: Either FormP FormP -> [(RuleName,[Sequent FormP])]

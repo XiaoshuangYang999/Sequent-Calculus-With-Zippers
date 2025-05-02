@@ -1,14 +1,16 @@
-{-# LANGUAGE InstanceSigs,TypeSynonymInstances, DeriveGeneric #-}
+{-# LANGUAGE InstanceSigs, TypeSynonymInstances, DeriveGeneric #-}
 
 module General where
-import Basics
+
 import Data.GraphViz
 import Data.GraphViz.Types.Monadic hiding ((-->))
-import GHC.Generics
-import Test.QuickCheck
 import Data.List as List
 import Data.Set (Set)
 import qualified Data.Set as Set
+import GHC.Generics
+import Test.QuickCheck
+
+import Basics
 
 type Sequent f = Set (Either f f)
 
@@ -28,10 +30,6 @@ type RuleName = String
 
 data Proof f = Node (Sequent f) (Maybe (RuleName, [Proof f]))
   deriving (Eq,Ord,Show)
-
-hasLeqTwoChildren :: Eq f => Proof f -> Bool
-hasLeqTwoChildren (Node _ Nothing) = True
-hasLeqTwoChildren (Node _ (Just (_, ts))) = length ts <= 2 && all hasLeqTwoChildren ts
 
 isClosedPf :: Eq f => Proof f -> Bool
 isClosedPf (Node _ Nothing) = False
@@ -78,8 +76,8 @@ isApplicableRule :: History f -> Sequent f -> Rule f -> Bool
 isApplicableRule hs fs r = any (\f -> isApplicable hs fs f r) fs
 
 -- | A Logic for a formula type `f`.
-data Logic f = Log { safeRules    :: [Rule f]
-                   , unsafeRules :: [Rule f] } -- Should we make logic a pair?
+data Logic f = Log { safeRules   :: [Rule f]
+                   , unsafeRules :: [Rule f] }
 
 -- * Tree Proofs
 
@@ -106,7 +104,6 @@ instance HasHistory ZipProof where
   histOf :: ZipProof f -> History f
   histOf (ZP _ zpath) = histOf zpath
 
-
 -- * Tree-based prover
 
 startForT :: f -> ProofWithH f
@@ -119,15 +116,15 @@ extendT  :: (Eq f, Show f, Ord f) => Logic f -> ProofWithH f -> [ProofWithH f]
 extendT l pt@(HP (h, Node fs Nothing)) =
   case ( List.filter (isApplicableRule h fs) (safeRules l)
        , unsafeRules l ) of
-  (r:_ , _       ) -> -- The safe rule r can be applied
+  -- The safe rule r can be applied:
+  (r:_ , _       ) ->
     [ HP (h, Node fs (Just (therule, map hpSnd ts)))
     | (therule, result) <- r h fs f
     , ts <- pickOneOfEach [ extendT l (HP (fs : h, Node newSeqs Nothing))
                           | newSeqs <- result ] ]
-    where f = Set.elemAt 0 $ Set.filter (\g -> isApplicable h fs g r) fs -- Could be dangerous
-  -- The logic has no unsafe rule -> CPL: -- FIXME rephrase
-  ([], []      ) -> [HP (h, Node fs Nothing)]
-  -- The logic has an unsafe rule -> IPL, K:
+    where f = Set.elemAt 0 $ Set.filter (\g -> isApplicable h fs g r) fs
+              -- (Using the first possible active formula.)
+  -- At least one unsafe rule can be applied:
   ([], rs@(_:_)) -> List.concatMap applyRule rs
     where
       applyRule r
@@ -137,8 +134,11 @@ extendT l pt@(HP (h, Node fs Nothing)) =
           gs = Set.filter (\g -> isApplicable h fs g r) fs
           nps = concat $ List.concatMap tryExtendT gs
           tryExtendT g = [ List.map (\pwh -> HP (h, Node fs (Just (therule, [hpSnd pwh]))))
-                           $ extendT l (HP (fs : h, Node (head result) Nothing)) -- "head" okay because we don't have branching in any unsaferules
+                           $ extendT l (HP (fs : h, Node (head result) Nothing))
+                           -- (Using head because we never have branching unsafeRules.)
                          | (therule, result) <- r (histOf pt) fs g ]
+  -- No rule can be applied, leave proof unfinished:
+  ([], []      ) -> [HP (h, Node fs Nothing)]
 extendT _ (HP (_,Node _ (Just _))) = error "already extended"
 
 proveT :: (Eq f, Show f,Ord f) => Logic f -> f -> [Proof f]
@@ -158,18 +158,18 @@ provePdfT l f= pdf $ proveprintT l f
 -- * Zipper-based prover
 
 instance TreeLike ZipProof where
-  zsingleton x                             = ZP (Node (Set.singleton (Right x)) Nothing) Top
-  move_left (ZP c (Step s r p (x:xs) ys))  = ZP x (Step s r p xs (c:ys))
-  move_left _                              = error "cannot go left"
-  move_right (ZP c (Step s r p xs (y:ys))) = ZP y (Step s r p (c:xs) ys)
-  move_right _                             = error "cannot go right"
-  move_up (ZP c (Step s r p xs ys))        = ZP (Node s (Just (r, (c:xs) ++ ys))) p
-  move_up _                                = error "cannot go up"
+  zsingleton x                               = ZP (Node (Set.singleton (Right x)) Nothing) Top
+  move_left (ZP c (Step s r p (x:xs) ys))    = ZP x (Step s r p xs (c:ys))
+  move_left _                                = error "cannot go left"
+  move_right (ZP c (Step s r p xs (y:ys)))   = ZP y (Step s r p (c:xs) ys)
+  move_right _                               = error "cannot go right"
+  move_up (ZP c (Step s r p xs ys))          = ZP (Node s (Just (r, (c:xs) ++ ys))) p
+  move_up _                                  = error "cannot go up"
   move_down (ZP (Node s (Just (r, x:xs))) p) = ZP x (Step s r p [] xs)
-  move_down _                              = error "cannot go down"
-  zdelete (ZP _ (Step s _ Top _ _))        = ZP (Node s Nothing) Top
-  zdelete (ZP _ (Step s _ p _ _))          = ZP (Node s Nothing) p
-  zdelete _                                = error "cannot delete top"
+  move_down _                                = error "cannot go down"
+  zdelete (ZP _ (Step s _ Top _ _))          = ZP (Node s Nothing) Top
+  zdelete (ZP _ (Step s _ p _ _))            = ZP (Node s Nothing) p
+  zdelete _                                  = error "cannot delete top"
 
 fromZip :: ZipProof f -> Proof f
 fromZip (ZP x Top) = x
@@ -180,7 +180,7 @@ hasRsibi :: ZipPath f -> Bool
 hasRsibi (Step _ _ _ _ (_:_))= True
 hasRsibi _ = False
 
--- Switch path, left-biased
+-- | Switch path, left-biased
 switch :: ZipProof f -> ZipProof f
 switch (ZP pf Top) = ZP pf Top
 switch (ZP pf p) = if hasRsibi p
@@ -198,6 +198,7 @@ extendZ  :: (Ord f,Eq f) => Logic f -> ZipProof f -> [ZipProof f]
 extendZ l zp@(ZP (Node fs Nothing) p) =
   case ( List.filter (isApplicableRule (histOf zp) fs) (safeRules l)
        , unsafeRules l) of
+  -- The safe rule r can be applied:
   (r:_ , _       )    ->  let f = Set.elemAt 0 $ Set.filter (\g -> isApplicable (histOf zp) fs g r) fs
                               (therule,results) = head $ r (histOf zp) fs f
                               newZP         = ZP (Node fs (Just (therule, [Node newSeq Nothing | newSeq <- results]))) p
@@ -205,11 +206,8 @@ extendZ l zp@(ZP (Node fs Nothing) p) =
                                 | null results = switch    newZP -- no children, i.e. proved
                                 | otherwise   = move_down newZP
                           in extendZ l nextZP
-  -- Check if there is unsafe rule
-  -- Whenever a dead end is found, stop the proving process
-  ([], []      )    -> [ZP (Node fs Nothing) p]
-        -- Has an unsafe rule
-  ([], rs@(_:_))    -> List.concatMap applyRule rs -- Try all unsafe rules.
+  -- At least one unsafe rule can be applied: 
+  ([], rs@(_:_))    -> List.concatMap applyRule rs
     where
       applyRule r
         | any isClosedZP nps = List.take 1 (List.filter isClosedZP nps)
@@ -219,6 +217,8 @@ extendZ l zp@(ZP (Node fs Nothing) p) =
           nps = concat $ List.concatMap tryExtendZ gs
           tryExtendZ g = [ extendZ l (ZP (Node (head result) Nothing) (Step fs therule p [] []) )
                          | (therule,result) <- r (histOf zp) fs g ]
+  -- No rule can be applied, leave proof unfinished:
+  ([], []      )    -> [ZP (Node fs Nothing) p]
 
 extendZ _ zp@(ZP (Node _ (Just _ )) _) = [zp] -- needed after switch
 
@@ -242,17 +242,18 @@ type Atom = Char
 
 -- | Propositional Formulas
 data FormP = BotP | AtP Atom | ConP FormP FormP | DisP FormP FormP | ImpP FormP FormP
-  deriving (Eq,Ord)
+  deriving (Eq,Ord,Generic)
 
 isatomP :: FormP -> Bool
 isatomP (AtP _) = True
 isatomP _ = False
 
 isAxiomP :: Rule FormP
-isAxiomP _ fs _ = [("Ax", [])|any (\f -> isatomP f && Right f `Set.member` fs) (leftsSet fs)]
+isAxiomP _ fs _ = [ ("Ax", [])
+                  | any (\f -> isatomP f && Right f `Set.member` fs) (leftsSet fs) ]
 
 leftBotP :: Rule FormP
-leftBotP _ fs _ = [("L⊥", [])|Left BotP `Set.member` fs]
+leftBotP _ fs _ = [ ("L⊥", []) | Left BotP `Set.member` fs ]
 
 negP :: FormP -> FormP
 negP f = ImpP f BotP
@@ -280,23 +281,9 @@ instance Arbitrary FormP where
       , AtP <$> choose ('p','t')
       , ImpP <$> genForm (n `div` factor) <*> genForm (n `div` factor)
       , ConP <$> genForm (n `div` factor) <*> genForm (n `div` factor)
+      , DisP <$> genForm (n `div` factor) <*> genForm (n `div` factor)
       ]
-
--- Conjunction on lists
-conP :: [FormP] -> FormP
-conP = List.foldr ConP topP
-
-disP :: [FormP] -> FormP
-disP = List.foldr DisP BotP
-
--- | Substitution in propositional formulas:
--- @substituteP f x t@ means we replace @x@ by @t@ in @f@.
-substituteP :: FormP -> Atom -> FormP -> FormP
-substituteP BotP _ _ = BotP
-substituteP f@(AtP y) x t = if y == x then t else f
-substituteP (ConP f g) x t = ConP (substituteP f x t) (substituteP g x t)
-substituteP (DisP f g) x t = DisP (substituteP f x t) (substituteP g x t)
-substituteP (ImpP f g) x t = ImpP (substituteP f x t) (substituteP g x t)
+  shrink = nub . genericShrink
 
 -- * The Modal Language
 
@@ -308,10 +295,12 @@ isatomM (AtM _) = True
 isatomM _ = False
 
 isAxiomM :: Rule FormM
-isAxiomM _ fs _ = [("Ax", [])|any (\f -> isatomM f && Right f `Set.member` fs) (leftsSet fs)]
+isAxiomM _ fs _ = [ ("Ax", [])
+                  | any (\f -> isatomM f && Right f `Set.member` fs) (leftsSet fs) ]
 
 leftBotM :: Rule FormM
-leftBotM _ fs _ = [("L⊥", [])|Left BotM `Set.member` fs]
+leftBotM _ fs _ = [ ("L⊥", [])
+                  | Left BotM `Set.member` fs ]
 
 negM :: FormM -> FormM
 negM f = ImpM f BotM
@@ -343,25 +332,10 @@ instance Arbitrary FormM where
       , AtM <$> choose ('p','t')
       , ImpM <$> genForm (n `div` factor) <*> genForm (n `div` factor)
       , ConM <$> genForm (n `div` factor) <*> genForm (n `div` factor)
+      , DisM <$> genForm (n `div` factor) <*> genForm (n `div` factor)
       , Box <$> genForm (n `div` factor)
       ]
   shrink = nub . genericShrink
-
--- conjunction on lists
-conM :: [FormM] -> FormM
-conM = List.foldr ConM topM
-
-disM :: [FormM] -> FormM
-disM = List.foldr DisM BotM
-
--- | Substitution in modal formulas:
--- @substituteM f x t@ means we replace @x@ by @t@ in @f@.
-substituteM :: FormP -> Atom -> FormP -> FormP
-substituteM BotP _ _ = BotP
-substituteM f@(AtP y) x t = if y == x then t else f
-substituteM (ConP f g) x t = ConP (substituteM f x t) (substituteM g x t)
-substituteM (DisP f g) x t = DisP (substituteM f x t) (substituteM g x t)
-substituteM (ImpP f g) x t = ImpP (substituteM f x t) (substituteM g x t)
 
 -- * Embedding Propositional language into Modal language
 

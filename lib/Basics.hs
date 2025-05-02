@@ -6,13 +6,12 @@ import GHC.IO.Handle
 import System.IO
 import System.IO.Temp
 import System.IO.Unsafe
-import qualified Data.ByteString as SB
+import qualified Data.ByteString as BS
 import Data.Either
 import Data.Set
 import qualified Data.Set as Set
 
-
--- Displayable things, using graphviz.
+-- | Displayable things, using graphviz.
 class DispAble t where
   toGraph :: t -> DotM String ()
   disp :: t -> IO ()
@@ -20,7 +19,7 @@ class DispAble t where
   dot :: t -> IO ()
   dot x = graphvizWithHandle Dot (digraph' $ toGraph x) Canon $ \h -> do
     hSetEncoding h utf8
-    SB.hGetContents h >>= SB.putStr
+    BS.hGetContents h >>= BS.putStr
   svg :: t -> String
   svg x = unsafePerformIO $ withSystemTempDirectory "tapdleau" $ \tmpdir -> do
     _ <- runGraphvizCommand Dot (digraph' $ toGraph x) Svg (tmpdir ++ "/temp.svg")
@@ -28,7 +27,7 @@ class DispAble t where
   pdf :: t -> IO FilePath
   pdf x = runGraphvizCommand Dot (digraph' $ toGraph x) Pdf "temp.pdf"
 
--- Zipper for trees
+-- | Zipper for trees
 class TreeLike z where
   zsingleton :: a -> z a
   move_left :: z a -> z a
@@ -37,16 +36,17 @@ class TreeLike z where
   move_down :: z a -> z a
   zdelete :: z a -> z a
 
-fromEither :: Either a a -> a
-fromEither (Left x) = x
-fromEither (Right x) = x
-
--- Pick one element of each list to form new lists.
+-- | Pick one element of each list to form new lists.
 pickOneOfEach :: [[a]] -> [[a]]
 pickOneOfEach [] = [[]]
 pickOneOfEach (l:ls) = [ x:xs | x <- l, xs <- pickOneOfEach ls ]
 
--- Set & Either
+-- * Helper functions for Set & Either
+
+fromEither :: Either a a -> a
+fromEither (Left x) = x
+fromEither (Right x) = x
+
 leftsSet :: Ord a => Set (Either a a) -> Set a
 leftsSet xs = Set.map fromEither $ Set.filter isLeft xs
 
@@ -59,12 +59,6 @@ leftOfSet = Set.filter isLeft
 rightOfSet :: Ord a => Set (Either a a) -> Set (Either a a)
 rightOfSet = Set.filter isRight
 
--- To identify empty set
-checkEmpty :: Set a -> Maybe (Set a)
-checkEmpty xs
-  | Set.null xs = Nothing
-  | otherwise   = Just xs
-
--- First function is the filter function, second function is the mapping function
+-- | Define another set by providing a filter and a map function.
 setComprehension :: (Ord a, Ord b) => (a -> Bool) -> (a -> b) -> Set a -> Set b
 setComprehension f g xs = Set.map g (Set.filter f xs)

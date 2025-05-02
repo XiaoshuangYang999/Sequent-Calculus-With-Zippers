@@ -1,22 +1,22 @@
-module K where
+module K (k, safeML) where
+
+import qualified Data.Set as Set
 
 import Basics
 import General
-import qualified Data.Set as Set
 
 k :: Logic FormM
-k = Log { safeRules    = [leftBotM, isAxiomM,replaceRule safeML]
-        , unsafeRules = [krule]
-        }
+k = Log { safeRules   = [leftBotM, isAxiomM, replaceRule safeML]
+        , unsafeRules = [krule] }
 
 -- | Propositional rules for Modal Logic.
 safeML :: Either FormM FormM -> [(RuleName,[Sequent FormM])]
-safeML (Left (ConM f g))  = [("L∧", [Set.insert (Left g)     $ Set.singleton (Left f)]  )]
-safeML (Left (DisM f g))  = [("Lv", [Set.singleton (Left f)  , Set.singleton (Left g)]  )]
-safeML (Left (ImpM f g))  = [("L→", [Set.singleton (Left g)  , Set.singleton (Right f)] )]
-safeML (Right (ConM f g)) = [("R∧", [Set.singleton (Right f) , Set.singleton (Right g)] )]
-safeML (Right (DisM f g)) = [("Rv", [Set.insert (Right g)    $ Set.singleton (Right f)] )]
-safeML (Right (ImpM f g)) = [("R→", [Set.insert (Right g)    $ Set.singleton (Left f)]  )]
+safeML (Left (ConM f g))  = [("L∧", [Set.fromList [Left f, Left g]])]
+safeML (Left (DisM f g))  = [("Lv", map Set.singleton [Left f, Left g])]
+safeML (Left (ImpM f g))  = [("L→", map Set.singleton [Left g, Right f])]
+safeML (Right (ConM f g)) = [("R∧", map Set.singleton [Right f, Right g])]
+safeML (Right (DisM f g)) = [("Rv", [Set.fromList [Right g, Right f]])]
+safeML (Right (ImpM f g)) = [("R→", [Set.fromList [Right g, Left f]])]
 safeML _                  = []
 
 -- | The K rule.

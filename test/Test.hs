@@ -1,9 +1,9 @@
-
 module Main where
 
 import Test.Hspec
 import Test.Hspec.QuickCheck
 import Test.QuickCheck
+
 import General
 import CPL
 import IPL
@@ -13,7 +13,6 @@ import GL
 import S4
 import PForm
 import MForm
-
 
 main :: IO ()
 main = hspec $ do
@@ -210,6 +209,8 @@ main = hspec $ do
         \ f -> discardAfter limit $ isProvableZ sfour f === isProvableT sfour f
 
     describe "Proofs are at most binary" $ do
+        let hasLeqTwoChildren (Node _ Nothing) = True
+            hasLeqTwoChildren (Node _ (Just (_, ts))) = length ts <= 2 && all hasLeqTwoChildren ts
         prop "GenZ for CPL" $
           \ f -> discardAfter limit $ all hasLeqTwoChildren $ proveZ classical f
         prop "GenT for CPL" $

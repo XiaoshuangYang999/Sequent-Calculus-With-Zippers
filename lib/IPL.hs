@@ -7,8 +7,8 @@ import General
 import Basics
 
 intui :: Logic FormP
-intui = Log {  safeRules    = [leftBotP, isAxiomP,replaceRuleIPLsafe safeIPL]
-            ,  unsafeRules = [replaceRuleIPLunsafe unsafeIPL] }
+intui = Log { safeRules   = [leftBotP, isAxiomP, additionRule safeIPL]
+            , unsafeRules = [additionRuleNoLoop unsafeIPL] }
 
 -- | Safe rules
 safeIPL :: Either FormP FormP -> [(RuleName,[Sequent FormP])]
@@ -32,27 +32,27 @@ saturated fs f = case safeIPL f of []              -> True
 
 -- * IPL-specific versions of `replaceRule`.
 
--- | Like `replaceRule` but keeping the active formula (built-in weakening) and stopping when saturated.
-replaceRuleIPLsafe :: (Either FormP FormP -> [(RuleName, [Sequent FormP])]) -> Rule FormP
-replaceRuleIPLsafe fun _ fs g =
+-- | Like `replaceRule` but keep active formula (built-in weakening), and block when saturated.
+additionRule :: (Either FormP FormP -> [(RuleName, [Sequent FormP])]) -> Rule FormP
+additionRule fun _ fs g =
   [ ( fst . head $ fun g
-    , [ fs `Set.union` newfs | newfs <- snd . head $ fun g] -- not deleting `g` here!
+    , [ fs `Set.union` newfs | newfs <- snd . head $ fun g ] -- not deleting `g` here!
     )
-  | not (saturated fs g) -- additional check
+  | not (saturated fs g) -- local loopcheck
   , not (List.null (fun g)) ]
 
--- | Helper function for replaceRuleIPLunsafe. TODO: explain.
+-- | Helper function for replaceRuleIPLunsafe.
 applyIPL :: Sequent FormP -> Either FormP FormP -> [Sequent FormP] -> [Sequent FormP]
 applyIPL fs f = List.map (Set.insert f (leftOfSet fs) `Set.union`)
 
--- | Like `replaceRule` but ... TODO: explain.
-replaceRuleIPLunsafe :: (Either FormP FormP -> [(RuleName, [Sequent FormP])]) -> Rule FormP
-replaceRuleIPLunsafe fun h fs g =
+-- | Like `additionRule` but also doing a global loopcheck. 
+additionRuleNoLoop :: (Either FormP FormP -> [(RuleName, [Sequent FormP])]) -> Rule FormP
+additionRuleNoLoop fun h fs g =
   [ ( fst . head $ fun g
-    , applyIPL fs g $ snd . head . unsafeIPL $ g
+    , applyIPL fs g $ snd . head . fun $ g
     )
-  | not (saturated fs g) -- additional check
-  , historyCheck h fs g -- aditional check
+  | not (saturated fs g) -- local loopcheck
+  , historyCheck h fs g -- gobal loopcheck
   , not (List.null (fun g)) ]
 
 -- | Check that the result of applying `unsafeIPL` to `f` does
