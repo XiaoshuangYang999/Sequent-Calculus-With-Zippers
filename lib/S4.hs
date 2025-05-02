@@ -23,15 +23,15 @@ fourrule :: Rule FormM
 fourrule hs fs (Right (Box f)) = concatMap (loopCheckMap hs) ss where
   ss = Set.map (\s -> Set.unions [Set.singleton (Right f), s, Set.map fromBox s]) ss'
   ss' = Set.powerSet $ Set.filter isLeftBox fs
-fourrule _ _ _ = [] 
+fourrule _ _ _ = []
 
 -- | The T box rule.
 trule :: Rule FormM
-trule hs fs (Left (Box f)) = [("T", [Node (Set.insert (Left f) fs) "" []]) | Set.insert (Left f) fs `notElem` hs]
+trule hs fs (Left (Box f)) = [("T", [Node (Set.insert (Left f) fs) Nothing]) | Set.insert (Left f) fs `notElem` hs]
 trule _ _ _ = []
 
 loopCheckMap :: History FormM -> Sequent FormM -> [(RuleName,[Proof FormM])]
-loopCheckMap hs seqs = [("4", [Node seqs "" [] ]) | seqs `notElem` hs]
+loopCheckMap hs seqs = [("4", [Node seqs Nothing]) | seqs `notElem` hs]
 
 removeBoxLeft :: Sequent FormM -> Sequent FormM
 removeBoxLeft  = setComprehension isLeftBox fromBox
@@ -43,4 +43,3 @@ isLeftBox _              = False
 fromBox :: Either FormM FormM -> Either FormM FormM
 fromBox (Left (Box g)) = Left g
 fromBox g = g
-

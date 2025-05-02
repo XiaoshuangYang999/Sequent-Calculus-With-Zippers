@@ -9,7 +9,7 @@ gl = Log { safeRules    = [leftBotM, isAxiomM, isCycle, replaceRule safeML]
          }
 
 isCycle :: Rule FormM
-isCycle h fs _ = [("Cycle", [Proved]) | fs `elem` h]
+isCycle h fs _ = [("Cycle", []) | fs `elem` h]
 
 -- | Propositional rules for Modal Logic.
 safeML :: Either FormM FormM -> [(RuleName,[Sequent FormM])]
@@ -26,10 +26,10 @@ fourrule :: Rule FormM
 fourrule _ fs (Right (Box f)) = concatMap func ss where
   ss = Set.map (\s -> Set.unions [Set.singleton (Right f), s, Set.map fromBox s]) ss'
   ss' = Set.powerSet $ Set.filter isLeftBox fs
-fourrule _ _ _ = [] 
+fourrule _ _ _ = []
 
 func :: Sequent FormM -> [(RuleName,[Proof FormM])]
-func seqs = [("4", [Node seqs "" []])]
+func seqs = [("4", [Node seqs Nothing])]
 
 isLeftBox :: Either FormM FormM -> Bool
 isLeftBox (Left (Box _)) = True

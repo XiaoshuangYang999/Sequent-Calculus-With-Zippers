@@ -24,23 +24,27 @@ ppSeq :: (Show f, Ord f) => Sequent f -> String
 ppSeq xs = ppForm (leftsSet xs) ++ " => " ++ ppForm (rightsSet xs)
 
 type RuleName = String
-data Proof f = Proved | Node (Sequent f) RuleName [Proof f]
+
+data Proof f = Node (Sequent f) (Maybe (RuleName, [Proof f]))
   deriving (Eq,Ord,Show)
 
 hasLeqTwoChildren :: Eq f => Proof f -> Bool
-hasLeqTwoChildren Proved = True
-hasLeqTwoChildren (Node _ _ ts) = length ts <= 2 && all hasLeqTwoChildren ts
+hasLeqTwoChildren (Node _ Nothing) = True
+hasLeqTwoChildren (Node _ (Just (_, ts))) = length ts <= 2 && all hasLeqTwoChildren ts
 
 isClosedPf :: Eq f => Proof f -> Bool
-isClosedPf Proved = True
-isClosedPf (Node _ _ ts) = ts /= [] && all isClosedPf ts
+isClosedPf (Node _ Nothing) = False
+isClosedPf (Node _ (Just (_,ts))) = all isClosedPf ts
 
 instance (Show f,Ord f) => (DispAble (Proof f)) where
   toGraph = toGraph' "" where
-    toGraph' pref Proved =
-      node pref [shape PlainText, toLabel "☐"]
-    toGraph' pref (Node fs rule' ts) = do
+    toGraph' pref (Node fs Nothing) = do
       node pref [shape PlainText, toLabel $ ppSeq fs]
+      node (pref ++ "open") [shape PlainText, toLabel "?"]
+      edge pref (pref ++ "open") []
+    toGraph' pref (Node fs (Just (rule',ts))) = do
+      node pref [shape PlainText, toLabel $ ppSeq fs]
+      -- FIXME: also show something for rule applications with no children!
       mapM_ (\(t,y') -> do
         toGraph' (pref ++ show y' ++ ":") t
         edge pref (pref ++ show y' ++ ":") [toLabel rule']
@@ -61,7 +65,8 @@ type Rule f = History f -> Sequent f -> Either f f -> [(RuleName,[Proof f])]
 replaceRule :: (Eq f,Ord f) => (Either f f -> [(RuleName,[Sequent f])]) -> Rule f
 replaceRule fun _ fs g =
   [ ( fst . head $ fun g
-    , [ Node (Set.delete g fs `Set.union` newfs) "" [] | newfs <- snd . head $ fun g]
+    , [ Node (Set.delete g fs `Set.union` newfs) Nothing
+      | newfs <- snd . head $ fun g ]
     )
   | not (null (fun g)) ]
 
@@ -104,39 +109,39 @@ instance HasHistory ZipProof where
 -- * Tree-based prover
 
 startForT :: f -> ProofWithH f
-startForT f =  HP ([],Node (Set.singleton (Right f)) "" [])
+startForT f =  HP ([], Node (Set.singleton (Right f)) Nothing)
 
 isClosedPfT :: Eq f => ProofWithH f -> Bool
 isClosedPfT (HP (_,fs)) = isClosedPf fs
 
 extendT  :: (Eq f, Show f, Ord f) => Logic f -> ProofWithH f -> [ProofWithH f]
-extendT l pt@(HP (h, Node fs "" [])) =
+extendT l pt@(HP (h, Node fs Nothing)) =
   case ( List.filter (isApplicableRule h fs) (safeRules l)
        , unsafeRules l ) of
   (r:_ , _       ) -> -- The safe rule r can be applied
-    [ HP (h, Node fs therule (map hpSnd ts) )
+    [ HP (h, Node fs (Just (therule, map hpSnd ts)))
     | (therule, result) <- r h fs f
     , ts <- pickOneOfEach [ extendT l (HP (fs : h, pf))
                           | pf <- result ] ]
     where f = Set.elemAt 0 $ Set.filter (\g -> isApplicable h fs g r) fs -- Could be dangerous
   -- The logic has no unsafe rule -> CPL: -- FIXME rephrase
-  ([], []      ) -> [HP (h, Node fs "" [])]
+  ([], []      ) -> [HP (h, Node fs Nothing)]
   -- The logic has an unsafe rule -> IPL, K:
   ([], rs@(_:_)) -> List.concatMap applyRule rs
     where
       applyRule r
         | any isClosedPfT nps = List.take 1 (List.filter isClosedPfT nps)
-        | otherwise = [HP (h, Node fs "" [])]
+        | otherwise = [HP (h, Node fs Nothing)]
         where
           gs = Set.filter (\g -> isApplicable h fs g r) fs
           nps = concat $ List.concatMap tryExtendT gs
-          tryExtendT g = [ List.map (\pwh -> HP (h, Node fs therule [hpSnd pwh]))
+          tryExtendT g = [ List.map (\pwh -> HP (h, Node fs (Just (therule, [hpSnd pwh]))))
                            $ extendT l (HP (fs : h, head result)) -- We don't have branching in any unsaferules
                          | (therule,result) <- r (histOf pt) fs g ]
-extendT _ (HP (_,Node _ (_:_) (_:_))) = error "already extended"
-extendT _ (HP (h,Proved)) = [HP (h,Proved)]
-extendT _ (HP (_,Node _ (_:_) [])) = error "rule but no children"
-extendT _ (HP (_,Node _ [] (_:_))) = error "children but no rule"
+extendT _ (HP (_,Node _ (Just _))) = error "already extended"
+-- extendT _ (HP (h,Proved)) = [HP (h,Proved)]
+-- extendT _ pt@(HP (_, Node _ (_:_) [])) = [pt] -- rule but no children means already proved.
+-- extendT _ (HP (_,Node _ [] (_:_))) = error "children but no rule"
 
 proveT :: (Eq f, Show f,Ord f) => Logic f -> f -> [Proof f]
 proveT l f = List.map hpSnd $ extendT l (startForT f)
@@ -155,17 +160,17 @@ provePdfT l f= pdf $ proveprintT l f
 
 -- * Zipper-based prover
 instance TreeLike ZipProof where
-  zsingleton x                             = ZP (Node (Set.singleton (Right x)) "" []) Top
+  zsingleton x                             = ZP (Node (Set.singleton (Right x)) Nothing) Top
   move_left (ZP c (Step s r p (x:xs) ys))  = ZP x (Step s r p xs (c:ys))
   move_left _                              = error "cannot go left"
   move_right (ZP c (Step s r p xs (y:ys))) = ZP y (Step s r p (c:xs) ys)
   move_right _                             = error "cannot go right"
-  move_up (ZP c (Step s r p xs ys))        = ZP (Node s r ((c:xs) ++ ys)) p
+  move_up (ZP c (Step s r p xs ys))        = ZP (Node s (Just (r, (c:xs) ++ ys))) p
   move_up _                                = error "cannot go up"
-  move_down (ZP (Node s r (x:xs)) p)       = ZP x (Step s r p [] xs)
+  move_down (ZP (Node s (Just (r, x:xs))) p) = ZP x (Step s r p [] xs)
   move_down _                              = error "cannot go down"
-  zdelete (ZP _ (Step s _ Top _ _))        = ZP (Node s "" []) Top
-  zdelete (ZP _ (Step s _ p _ _))          = ZP (Node s "" []) p
+  zdelete (ZP _ (Step s _ Top _ _))        = ZP (Node s Nothing) Top
+  zdelete (ZP _ (Step s _ p _ _))          = ZP (Node s Nothing) p
   zdelete _                                = error "cannot delete top"
 
 fromZip :: ZipProof f -> Proof f
@@ -185,7 +190,7 @@ switch (ZP pf p) = if hasRsibi p
                       else switch.move_up $ ZP pf p
 
 startForZ :: f -> ZipProof f
-startForZ f = ZP (Node (Set.singleton (Right f)) "" []) Top
+startForZ f = ZP (Node (Set.singleton (Right f)) Nothing) Top
 
 isClosedZP :: Eq f => ZipProof f -> Bool
 isClosedZP (ZP fs Top) = isClosedPf fs
@@ -193,35 +198,35 @@ isClosedZP (ZP fs p) = isClosedPf fs &&  (isClosedZP . switch $ ZP fs p)
 
 
 extendZ  :: (Ord f,Eq f) => Logic f -> ZipProof f -> [ZipProof f]
-extendZ l zp@(ZP (Node fs "" []) p) =
+extendZ l zp@(ZP (Node fs Nothing) p) =
   case ( List.filter (isApplicableRule (histOf zp) fs) (safeRules l)
        , unsafeRules l) of
   (r:_ , _       )    ->  let f = Set.elemAt 0 $ Set.filter (\g -> isApplicable (histOf zp) fs g r) fs
                               (therule,result) = head $ r (histOf zp) fs f
-                              newZP         = ZP (Node fs therule result) p
+                              newZP         = ZP (Node fs (Just (therule, result))) p
                               nextZP
-                                | result == [Proved] = switch    newZP
-                                | otherwise          = move_down newZP
+                                | null result = switch    newZP -- no children, i.e. proved
+                                | otherwise   = move_down newZP
                           in extendZ l nextZP
   -- Check if there is unsafe rule
-        -- Whenever a dead end is found, stop the proving process
-  ([], []      )    -> [ZP (Node fs "" []) p]
+  -- Whenever a dead end is found, stop the proving process
+  ([], []      )    -> [ZP (Node fs Nothing) p]
         -- Has an unsafe rule
   ([], rs@(_:_))    -> List.concatMap applyRule rs -- Try all unsafe rules.
     where
       applyRule r
         | any isClosedZP nps = List.take 1 (List.filter isClosedZP nps)
-        | otherwise = [ZP (Node fs "" []) p]
+        | otherwise = [ZP (Node fs Nothing) p]
         where
           gs = Set.filter (\g -> isApplicable (histOf zp) fs g r) fs
           nps = concat $ List.concatMap tryExtendZ gs
           tryExtendZ g = [ extendZ l (ZP (head result) (Step fs therule p [] []) )
                          | (therule,result) <- r (histOf zp) fs g ]
 
-extendZ _ (ZP (Node fs r@(_:_) xs@(_:_)) p) = [ZP (Node fs r xs) p] -- needed after switch
-extendZ _ (ZP Proved _) = error "already proved"
-extendZ _ (ZP (Node _ (_:_) []) _ ) = error "rule but no children"
-extendZ _ (ZP (Node _ [] (_:_)) _) = error "children but no rules"
+extendZ _ zp@(ZP (Node _ (Just _ )) _) = [zp] -- needed after switch
+-- extendZ _ (ZP Proved _) = error "already proved"
+-- extendZ _ zp@(ZP (Node _ (_:_) []) _ ) = [zp] error "rule but no children means already proved"
+-- extendZ _ (ZP (Node _ [] (_:_)) _) = error "children but no rules"
 
 
 proveZ :: (Eq f, Ord f) => Logic f -> f -> [Proof f]
@@ -251,10 +256,10 @@ isatomP (AtP _) = True
 isatomP _ = False
 
 isAxiomP :: Rule FormP
-isAxiomP _ fs _ = [("Ax", [Proved])|any (\f -> isatomP f && Right f `Set.member` fs) (leftsSet fs)]
+isAxiomP _ fs _ = [("Ax", [])|any (\f -> isatomP f && Right f `Set.member` fs) (leftsSet fs)]
 
 leftBotP :: Rule FormP
-leftBotP _ fs _ = [("L⊥", [Proved])|Left BotP `Set.member` fs]
+leftBotP _ fs _ = [("L⊥", [])|Left BotP `Set.member` fs]
 
 negP :: FormP -> FormP
 negP f = ImpP f BotP
@@ -310,10 +315,10 @@ isatomM (AtM _) = True
 isatomM _ = False
 
 isAxiomM :: Rule FormM
-isAxiomM _ fs _ = [("Ax", [Proved])|any (\f -> isatomM f && Right f `Set.member` fs) (leftsSet fs)]
+isAxiomM _ fs _ = [("Ax", [])|any (\f -> isatomM f && Right f `Set.member` fs) (leftsSet fs)]
 
 leftBotM :: Rule FormM
-leftBotM _ fs _ = [("L⊥", [Proved])|Left BotM `Set.member` fs]
+leftBotM _ fs _ = [("L⊥", [])|Left BotM `Set.member` fs]
 
 negM :: FormM -> FormM
 negM f = ImpM f BotM

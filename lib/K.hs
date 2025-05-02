@@ -31,5 +31,5 @@ krule _ fs (Right (Box f)) = Set.toList $ Set.map (func f) $ Set.powerSet . remo
   fromBox (Left (Box g)) = Left g
   fromBox g = g
   func :: FormM -> Sequent FormM -> (RuleName,[Proof FormM])
-  func g seqs = ("K", [Node (Set.insert (Right g) seqs) "" []])
+  func g seqs = ("K", [Node (Set.insert (Right g) seqs) Nothing])
 krule _ _ _ = []

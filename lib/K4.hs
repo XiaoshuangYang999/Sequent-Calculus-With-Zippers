@@ -23,10 +23,10 @@ fourrule :: Rule FormM
 fourrule hs fs (Right (Box f)) = concatMap (loopCheckMap hs) ss where
   ss = Set.map (\s -> Set.unions [Set.singleton (Right f), s, Set.map fromBox s]) ss'
   ss' = Set.powerSet $ Set.filter isLeftBox fs
-fourrule _ _ _ = [] 
+fourrule _ _ _ = []
 
 loopCheckMap :: History FormM -> Sequent FormM -> [(RuleName,[Proof FormM])]
-loopCheckMap hs seqs = [("4", [Node seqs "" []]) | seqs `notElem` hs]
+loopCheckMap hs seqs = [("4", [Node seqs Nothing]) | seqs `notElem` hs]
 
 isLeftBox :: Either FormM FormM -> Bool
 isLeftBox (Left (Box _)) = True
