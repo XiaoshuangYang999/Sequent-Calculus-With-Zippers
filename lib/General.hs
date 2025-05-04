@@ -1,30 +1,21 @@
-{-# LANGUAGE InstanceSigs, TypeSynonymInstances, DeriveGeneric #-}
+{-# LANGUAGE InstanceSigs, DeriveGeneric, FlexibleInstances #-}
 
 module General where
 
+import Control.Monad
 import Data.GraphViz
 import Data.GraphViz.Types.Monadic hiding ((-->))
 import Data.List as List
 import Data.Set (Set)
 import qualified Data.Set as Set
 import GHC.Generics
+import System.IO (hGetContents)
+import System.Process
 import Test.QuickCheck
 
 import Basics
 
 type Sequent f = Set (Either f f)
-
--- Pretty printing a list of f's
-ppList :: Show f => [f] -> String
-ppList = intercalate " , " . map show
-
--- Pretty printing a set of f's
-ppForm :: Show f => Set f -> String
-ppForm ms = ppList (Set.toList ms)
-
--- Pretty printing a sequent of f;s
-ppSeq :: (Show f, Ord f) => Sequent f -> String
-ppSeq xs = ppForm (leftsSet xs) ++ " => " ++ ppForm (rightsSet xs)
 
 type RuleName = String
 
@@ -34,23 +25,6 @@ data Proof f = Node (Sequent f) (Maybe (RuleName, [Proof f]))
 isClosedPf :: Eq f => Proof f -> Bool
 isClosedPf (Node _ Nothing) = False
 isClosedPf (Node _ (Just (_,ts))) = all isClosedPf ts
-
-instance (Show f,Ord f) => (DispAble (Proof f)) where
-  toGraph = toGraph' "" where
-    toGraph' pref (Node fs Nothing) = do
-      node pref [shape PlainText, toLabel $ ppSeq fs]
-      node (pref ++ "open") [shape PlainText, toLabel "?"]
-      edge pref (pref ++ "open") []
-    toGraph' pref (Node fs (Just (rule',ts))) = do
-      node pref [shape PlainText, toLabel $ ppSeq fs]
-      if null ts then do
-        node pref [shape PlainText, toLabel $ ppSeq fs]
-        node (pref ++ "closed") [shape PlainText, toLabel "."]
-        edge pref (pref ++ "closed") [toLabel rule']
-      else mapM_ (\(t,y') -> do
-        toGraph' (pref ++ show y' ++ ":") t
-        edge pref (pref ++ show y' ++ ":") [toLabel rule']
-        ) (zip ts [(0::Integer)..])
 
 -- * Histories, Rules, Logics
 
@@ -239,6 +213,79 @@ proveprintZ l f = if isProvableZ l f
 provePdfZ :: (Show f, Eq f,Ord f) => Logic f -> f -> IO FilePath
 provePdfZ l f = pdf $ proveprintZ l f
 
+-- * GraphViz and LaTeX output
+
+-- Pretty printing a list of f's
+ppList :: Show f => [f] -> String
+ppList = intercalate " , " . map show
+
+-- Pretty printing a set of f's
+ppForm :: Show f => Set f -> String
+ppForm ms = ppList (Set.toList ms)
+
+-- Pretty printing a sequent of f;s
+ppSeq :: (Show f, Ord f) => Sequent f -> String
+ppSeq xs = ppForm (leftsSet xs) ++ " => " ++ ppForm (rightsSet xs)
+
+instance (Show f,Ord f) => (DispAble (Proof f)) where
+  toGraph = toGraph' "" where
+    toGraph' pref (Node fs Nothing) = do
+      node pref [shape PlainText, toLabel $ ppSeq fs]
+      node (pref ++ "open") [shape PlainText, toLabel "?"]
+      edge pref (pref ++ "open") []
+    toGraph' pref (Node fs (Just (rule',ts))) = do
+      node pref [shape PlainText, toLabel $ ppSeq fs]
+      if null ts then do
+        node pref [shape PlainText, toLabel $ ppSeq fs]
+        node (pref ++ "closed") [shape PlainText, toLabel "."]
+        edge pref (pref ++ "closed") [toLabel rule']
+      else mapM_ (\(t,y') -> do
+        toGraph' (pref ++ show y' ++ ":") t
+        edge pref (pref ++ show y' ++ ":") [toLabel rule']
+        ) (zip ts [(0::Integer)..])
+
+class TeX a where
+  tex :: a -> String
+  texFile :: a -> IO ()
+  texFile x = do
+    let
+      pre = unlines [ "\\documentclass{standalone}"
+                   , "\\usepackage[utf8]{inputenc}"
+                   , "\\usepackage{bussproofs,fontenc,graphicx,amssymb,amsmath}"
+                   , "\\usepackage[pdftex]{hyperref}"
+                   , "\\hypersetup{pdfborder={0 0 0},breaklinks=true}"
+                   , "\\begin{document}" ]
+      post = "\\end{document}"
+    writeFile "temp.tex" (pre ++ tex x ++ post)
+    (_inp, _out, err, pid) <- runInteractiveCommand "pdflatex temp.tex"
+    _ <- waitForProcess pid
+    hGetContents err >>= (\e -> unless (null e) (putStrLn e))
+
+instance (Ord f, TeX f) => TeX (Sequent f) where
+  tex xs = "\\ensuremath{" ++ texList (Set.toList $ leftsSet xs) ++ " \\Rightarrow " ++ texList (Set.toList $ rightsSet xs) ++ "} "
+
+texList :: TeX f => [f] -> String
+texList = intercalate " , " . map tex
+
+-- | General LaTeX code to show a proof using the buss package.
+toBuss :: (Show f, TeX f, Ord f) => Proof f -> String
+toBuss p = toB p ++ "\\DisplayProof\n" where
+  toB (Node fs Nothing) = "\\AxiomC{" ++ tex fs ++ " }"
+  toB (Node fs (Just (rule', ts))) =
+    concatMap toB ts
+    ++
+    "\\RightLabel{" ++ rule' ++ "}\n"
+    ++
+    case length ts of
+    0 -> "\\AxiomC{ "
+    1 -> "\\UnaryInfC{ "
+    2 -> "\\BinaryInfC{ "
+    _ -> error "too many premises"
+    ++ tex fs ++  "}\n"
+
+instance (Show f, TeX f, Ord f) => TeX (Proof f) where
+  tex = toBuss
+
 -- * The Propositional language
 
 type Atom = Char
@@ -267,12 +314,19 @@ topP = negP BotP
 iffP :: FormP -> FormP -> FormP
 iffP f g = ConP (ImpP f g) (ImpP g f)
 
-instance (Show FormP) where
+instance Show FormP where
   show BotP       = "⊥"
   show (AtP a)    = [a]
   show (ConP f g) = "(" ++ show f ++ " ∧ " ++ show g ++ ")"
   show (DisP f g) = "(" ++ show f ++ " v " ++ show g ++ ")"
   show (ImpP f g) = "(" ++ show f ++ " → " ++ show g ++ ")"
+
+instance TeX FormP where
+  tex BotP       = "\\bot"
+  tex (AtP a)    = [a]
+  tex (ConP f g) = "(" ++ tex f ++ " \\land " ++ tex g ++ ")"
+  tex (DisP f g) = "(" ++ tex f ++ " \\lor " ++ tex g ++ ")"
+  tex (ImpP f g) = "(" ++ tex f ++ " \\to " ++ tex g ++ ")"
 
 instance Arbitrary FormP where
   arbitrary = sized genForm where
@@ -317,13 +371,21 @@ iffM f g = ConM (ImpM f g) (ImpM g f)
 diaM :: FormM -> FormM
 diaM f = negM $ Box $ negM f
 
-instance (Show FormM) where
+instance Show FormM where
   show BotM       = "⊥"
   show (AtM a)    = [a]
   show (ConM f g) = "(" ++ show f ++ " ∧ " ++ show g ++ ")"
   show (DisM f g) = "(" ++ show f ++ " v " ++ show g ++ ")"
   show (ImpM f g) = "(" ++ show f ++ " → " ++ show g ++ ")"
   show (Box f)    = "☐" ++ show f
+
+instance TeX FormM where
+  tex BotM       = "\\bot"
+  tex (AtM a)    = [a]
+  tex (ConM f g) = "(" ++ tex f ++ " \\land " ++ tex g ++ ")"
+  tex (DisM f g) = "(" ++ tex f ++ " \\lor " ++ tex g ++ ")"
+  tex (ImpM f g) = "(" ++ tex f ++ " \\to " ++ tex g ++ ")"
+  tex (Box f)    = " \\Box " ++ tex f
 
 instance Arbitrary FormM where
   arbitrary = sized genForm where

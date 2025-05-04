@@ -27,6 +27,6 @@ cabal.sandbox.config
 dist
 dist-*
 *.cabal
-temp.pdf
+temp.*
 report.pdf
 bench/results*

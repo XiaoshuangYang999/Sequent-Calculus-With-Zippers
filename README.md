@@ -20,9 +20,9 @@ You can use `stack ghci` to run examples like this:
     stack ghci lib/K.hs lib/MForm.hs
 
     ghci> formForK 3
-    (( ☐ (c → (d → (e → a)))) → (( ☐ c) → (( ☐ d) → (( ☐ e) → ( ☐ a)))))
+    (☐(c → (d → (e → a))) → (☐c → (☐d → (☐e → ☐a))))
     ghci> nFormForK 3
-    (( ☐ (c → (d → (e → (b → a))))) → (( ☐ c) → (( ☐ d) → (( ☐ e) → ( ☐ a)))))
+    (☐(c → (d → (e → (b → a)))) → (☐c → (☐d → (☐e → ☐a))))
 
     ghci> isProvableT K.k (MForm.formForK 3)
     True
@@ -39,3 +39,16 @@ To run all tests, run `stack test`.
 
 To run all benchmarks, run `stack bench`.
 Note that this can take quite long.
+
+## LaTeX output
+
+The prover can generate code for [bussproofs](https://ctan.org/pkg/bussproofs).
+
+    stack ghci lib/GL.hs lib/MForm.hs
+
+    ghci> texFile $ head $ proveZ GL.gl lobaxiom
+
+This will write code into `temp.tex` and then run `pdflatex` on it.
+The result looks as follows.
+
+![](doc/GL-example.png)

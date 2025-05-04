@@ -17,6 +17,7 @@ dependencies:
   - tagged
   - hspec
   - multiset
+  - process
   - containers
 
 library:
