@@ -43,8 +43,11 @@ instance (Show f,Ord f) => (DispAble (Proof f)) where
       edge pref (pref ++ "open") []
     toGraph' pref (Node fs (Just (rule',ts))) = do
       node pref [shape PlainText, toLabel $ ppSeq fs]
-      -- FIXME: also show something for rule applications with no children!
-      mapM_ (\(t,y') -> do
+      if null ts then do
+        node pref [shape PlainText, toLabel $ ppSeq fs]
+        node (pref ++ "closed") [shape PlainText, toLabel "."]
+        edge pref (pref ++ "closed") [toLabel rule']
+      else mapM_ (\(t,y') -> do
         toGraph' (pref ++ show y' ++ ":") t
         edge pref (pref ++ show y' ++ ":") [toLabel rule']
         ) (zip ts [(0::Integer)..])

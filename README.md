@@ -17,23 +17,23 @@ To build the project run `stack build`.
 
 You can use `stack ghci` to run examples like this:
 
-    stack ghci lib/ML.hs lib/Example.hs
+    stack ghci lib/K.hs lib/MForm.hs
 
     ghci> formForK 3
     (( ☐ (c → (d → (e → a)))) → (( ☐ c) → (( ☐ d) → (( ☐ e) → ( ☐ a)))))
     ghci> nFormForK 3
     (( ☐ (c → (d → (e → (b → a))))) → (( ☐ c) → (( ☐ d) → (( ☐ e) → ( ☐ a)))))
 
-    ghci> isProvableT modal (Example.formForK 3)
+    ghci> isProvableT K.k (MForm.formForK 3)
     True
-    ghci> isProvableZ modal (Example.formForK 3)
+    λ> isProvableZ K.k (MForm.formForK 3)
     True
-    ghci> isProvableT modal (Example.nFormForK 3)
+    λ> isProvableT K.k (MForm.nFormForK 3)
     False
-    ghci> isProvableZ modal (Example.nFormForK 3)
+    λ> isProvableZ K.k (MForm.nFormForK 3)
     False
 
-In the above `modal` is the name of the logic and proof system.
+In the above `K.k` is the name of the `Logic`, i.e. the proof system.
 
 To run all tests, run `stack test`.
 
