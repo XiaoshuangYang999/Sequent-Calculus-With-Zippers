@@ -1,4 +1,4 @@
-{-# LANGUAGE InstanceSigs, DeriveGeneric, FlexibleInstances #-}
+{-# LANGUAGE InstanceSigs, DeriveGeneric, FlexibleInstances, LambdaCase #-}
 
 module General where
 
@@ -183,7 +183,7 @@ extendZ l zp@(ZP (Node fs Nothing) p) =
                                 | null results = switch    newZP -- no children, i.e. proved
                                 | otherwise   = move_down newZP
                           in extendZ l nextZP
-  -- At least one unsafe rule can be applied: 
+  -- At least one unsafe rule can be applied:
   ([], rs@(_:_))    -> List.concatMap applyRule rs
     where
       applyRule r
@@ -249,7 +249,7 @@ class TeX a where
   texFile :: a -> IO ()
   texFile x = do
     let
-      pre = unlines [ "\\documentclass{standalone}"
+      pre = unlines [ "\\documentclass[border=2pt]{standalone}"
                    , "\\usepackage[utf8]{inputenc}"
                    , "\\usepackage{bussproofs,fontenc,graphicx,amssymb,amsmath}"
                    , "\\usepackage[pdftex]{hyperref}"
@@ -257,7 +257,7 @@ class TeX a where
                    , "\\begin{document}" ]
       post = "\\end{document}"
     writeFile "temp.tex" (pre ++ tex x ++ post)
-    (_inp, _out, err, pid) <- runInteractiveCommand "pdflatex temp.tex"
+    (_inp, _out, err, pid) <- runInteractiveCommand "pdflatex -interaction=nonstopmode temp.tex"
     _ <- waitForProcess pid
     hGetContents err >>= (\e -> unless (null e) (putStrLn e))
 
@@ -265,7 +265,29 @@ instance (Ord f, TeX f) => TeX (Sequent f) where
   tex xs = "\\ensuremath{" ++ texList (Set.toList $ leftsSet xs) ++ " \\Rightarrow " ++ texList (Set.toList $ rightsSet xs) ++ "} "
 
 texList :: TeX f => [f] -> String
-texList = intercalate " , " . map tex
+texList = intercalate " , " . map (removeOutsideBrackets . tex) where
+  removeOutsideBrackets ('(':rest) = init rest
+  removeOutsideBrackets s = s
+
+texRuleName :: RuleName -> String
+texRuleName r = "$" ++ concatMap f r ++ "$" where
+  f = \case
+    'v' -> "\\lor"
+    '→' -> "\\to"
+    '∧' -> "\\land"
+    'R' -> "_{\\mathsf{R}}"
+    'L' -> "_{\\mathsf{L}}"
+    'i' -> "^{i}"
+    'T' -> "\\mathsf{T}"
+    'a' -> "\\mathsf{a}"
+    'x' -> "\\mathsf{x}"
+    'c' -> "\\mathsf{c}"
+    'y' -> "\\mathsf{y}"
+    'l' -> "\\mathsf{l}"
+    'e' -> "\\mathsf{e}"
+    '⊥' -> "\\bot"
+    '4' -> "\\mathsf{4}"
+    c -> [c]
 
 -- | General LaTeX code to show a proof using the buss package.
 toBuss :: (Show f, TeX f, Ord f) => Proof f -> String
@@ -275,11 +297,11 @@ toBuss p = toB p ++ "\\DisplayProof\n" where
     concatMap toB ts
     ++
     case length ts of
-    0 -> "\\AxiomC{}\n " ++ r ++ "\\UnaryInfC{ " ++ tex fs ++  "}\n"
+    0 -> "\\AxiomC{\\phantom{I}}\n " ++ r ++ "\\UnaryInfC{ " ++ tex fs ++  "}\n"
     1 -> r ++ "\\UnaryInfC{ " ++ tex fs ++  "}\n"
     2 -> r ++ "\\BinaryInfC{ " ++ tex fs ++  "}\n"
     _ -> error "too many premises"
-    where r = "\\RightLabel{" ++ rule' ++ "}\n"
+    where r = "\\LeftLabel{" ++ texRuleName rule' ++ "}\n"
 
 instance (Show f, TeX f, Ord f) => TeX (Proof f) where
   tex = toBuss
@@ -297,11 +319,11 @@ isatomP (AtP _) = True
 isatomP _ = False
 
 isAxiomP :: Rule FormP
-isAxiomP _ fs _ = [ ("Ax", [])
+isAxiomP _ fs _ = [ ("ax", [])
                   | any (\f -> isatomP f && Right f `Set.member` fs) (leftsSet fs) ]
 
 leftBotP :: Rule FormP
-leftBotP _ fs _ = [ ("L⊥", []) | Left BotP `Set.member` fs ]
+leftBotP _ fs _ = [ ("⊥L", []) | Left BotP `Set.member` fs ]
 
 negP :: FormP -> FormP
 negP f = ImpP f BotP
@@ -350,7 +372,7 @@ isatomM (AtM _) = True
 isatomM _ = False
 
 isAxiomM :: Rule FormM
-isAxiomM _ fs _ = [ ("Ax", [])
+isAxiomM _ fs _ = [ ("ax", [])
                   | any (\f -> isatomM f && Right f `Set.member` fs) (leftsSet fs) ]
 
 leftBotM :: Rule FormM

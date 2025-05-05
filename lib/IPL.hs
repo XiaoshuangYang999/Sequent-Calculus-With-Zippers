@@ -12,16 +12,18 @@ intui = Log { safeRules   = [leftBotP, isAxiomP, additionRule safeIPL]
 
 -- | Safe rules
 safeIPL :: Either FormP FormP -> [(RuleName,[Sequent FormP])]
-safeIPL (Left (ConP f g))  = [("L∧", [Set.fromList [Left g, Left f]])]
-safeIPL (Left (DisP f g))  = [("Lv", map Set.singleton [Left f, Left g])]
-safeIPL (Left (ImpP f g))  = [("L→", map Set.singleton [Left g, Right f])]
-safeIPL (Right (ConP f g)) = [("R∧", map Set.singleton [Right f, Right g])]
-safeIPL (Right (DisP f g)) = [("Rv", [Set.fromList [Right g, Right f]])]
+safeIPL (Left (ConP f g))  = [("∧L", [Set.fromList [Left g, Left f]])]
+safeIPL (Left (DisP f g))  = [("vL", map Set.singleton [Left f, Left g])]
+safeIPL (Left (ImpP f g))  = [("→L", map Set.singleton [Left g, Right f])]
+safeIPL (Right (ConP f g)) = [("∧R", map Set.singleton [Right f, Right g])]
+safeIPL (Right (DisP f g)) = [("vR", [Set.fromList [Right g, Right f]])]
 safeIPL _                  = []
+
+-- TODO: where is the →iL rule?
 
 -- | The R-> rule.
 unsafeIPL :: Either FormP FormP -> [(RuleName,[Sequent FormP])]
-unsafeIPL (Right (ImpP f g)) = [("R→", [Set.fromList [Right g, Left f]])]
+unsafeIPL (Right (ImpP f g)) = [("→iR", [Set.fromList [Right g, Left f]])]
 unsafeIPL  _                 = []
 
 -- | Is this sequent saturated?
@@ -45,7 +47,7 @@ additionRule fun _ fs g =
 applyIPL :: Sequent FormP -> Either FormP FormP -> [Sequent FormP] -> [Sequent FormP]
 applyIPL fs f = List.map (Set.insert f (leftOfSet fs) `Set.union`)
 
--- | Like `additionRule` but also doing a global loopcheck. 
+-- | Like `additionRule` but also doing a global loopcheck.
 additionRuleNoLoop :: (Either FormP FormP -> [(RuleName, [Sequent FormP])]) -> Rule FormP
 additionRuleNoLoop fun h fs g =
   [ ( fst . head $ fun g
