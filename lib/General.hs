@@ -274,14 +274,12 @@ toBuss p = toB p ++ "\\DisplayProof\n" where
   toB (Node fs (Just (rule', ts))) =
     concatMap toB ts
     ++
-    "\\RightLabel{" ++ rule' ++ "}\n"
-    ++
     case length ts of
-    0 -> "\\AxiomC{ "
-    1 -> "\\UnaryInfC{ "
-    2 -> "\\BinaryInfC{ "
+    0 -> "\\AxiomC{}\n " ++ r ++ "\\UnaryInfC{ " ++ tex fs ++  "}\n"
+    1 -> r ++ "\\UnaryInfC{ " ++ tex fs ++  "}\n"
+    2 -> r ++ "\\BinaryInfC{ " ++ tex fs ++  "}\n"
     _ -> error "too many premises"
-    ++ tex fs ++  "}\n"
+    where r = "\\RightLabel{" ++ rule' ++ "}\n"
 
 instance (Show f, TeX f, Ord f) => TeX (Proof f) where
   tex = toBuss
