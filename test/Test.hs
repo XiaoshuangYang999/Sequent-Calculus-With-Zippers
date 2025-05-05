@@ -282,3 +282,9 @@ main = hspec $ do
         \ f -> discardAfter limit $ isProvableZ kfour f `implies` isProvableZ sfour f
       prop "GenT" $
         \ f -> discardAfter limit $ isProvableT kfour f `implies` isProvableT sfour f
+
+    describe "f is provable in IPL iff its translation is provable in S4" $ do
+      prop "GenZ" $
+        \ f -> discardAfter limit $ isProvableZ intui f === isProvableZ sfour (translation f)
+      prop "GenT" $
+        \ f -> discardAfter limit $ isProvableT intui f === isProvableT sfour (translation f)

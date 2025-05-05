@@ -408,3 +408,11 @@ pTom (AtP x) = AtM x
 pTom (ConP x y) = ConM (pTom x) (pTom y)
 pTom (DisP x y) = DisM (pTom x) (pTom y)
 pTom (ImpP x y) = ImpM (pTom x) (pTom y)
+
+-- The Gödel–McKinsey–Tarski Translation
+translation :: FormP -> FormM
+translation BotP = BotM
+translation (AtP x) = Box $ AtM x
+translation (ConP x y) = ConM (translation x) (translation y)
+translation (DisP x y) = DisM (translation x) (translation y)
+translation (ImpP x y) = Box $ ImpM (translation x) (translation y)
