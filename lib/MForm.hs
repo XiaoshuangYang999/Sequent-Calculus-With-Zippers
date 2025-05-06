@@ -67,40 +67,54 @@ boxToMoreBox n = ImpM (boxes n a1) (boxes (n + 1) a1)
 boxToFewerBox :: Int -> FormM
 boxToFewerBox n = ImpM (boxes (n + 1) a1) (boxes n a1)
 
+-- Holds only in GL
+lobBoxes:: Int -> FormM
+lobBoxes n = ImpM (Box (ImpM (Box a1) a1)) (boxes n a1)
+
+-- Generate a list of n variables
 listOfAt :: Int -> [FormM]
 listOfAt n = map AtM $ take n ['c'..]
 
-formForK :: Int -> FormM
-formForK n = ImpM (Box (List.foldr ImpM (AtM 'a') (listOfAt n)))
+-- Multi-version of the K axiom
+multiVerK :: Int -> FormM
+multiVerK n = ImpM (Box (List.foldr ImpM (AtM 'a') (listOfAt n)))
                 $ foldr (ImpM . Box) (Box (AtM 'a')) (listOfAt n)
 
-nFormForK :: Int -> FormM
-nFormForK n = ImpM (Box (List.foldr ImpM (AtM 'a') (listOfAt n ++ [AtM 'b'])))
+-- Similar to multiVerK, but with an extra atom in the premise. False
+extraAtK :: Int -> FormM
+extraAtK n = ImpM (Box (List.foldr ImpM (AtM 'a') (listOfAt n ++ [AtM 'b'])))
                 $ foldr (ImpM . Box) (Box (AtM 'a')) (listOfAt n)
 
 propFormulasM :: [(String, Int -> FormM)]
-propFormulasM =
-  [ ("disPhiPieR", pTom . disPhiPieR)
-  , ("disPhiPieL", pTom . disPhiPieL)
-  , ("disPieR", pTom . disPieR)
-  , ("disPieL", pTom . disPieL)
-  , ("conPieR", pTom . conPieR)
-  , ("conPieL", pTom . conPieL)
-  , ("conBotR", pTom . conBotR)
-  , ("conBotL", pTom . conBotL)
-  ]
+propFormulasM =  map (fmap (pTom .)) allFormulasP
 
 boxesFormulasM :: [(String, Int -> FormM)]
 boxesFormulasM =
-  [ ("boxesTop", boxesTop)
+  [ ("boxesTop", boxesTop) -- special case. 
   , ("boxesBot", boxesBot)
   ]
 
 kFormulasM :: [(String, Int -> FormM)]
 kFormulasM =
-  [ ("formForK", formForK)
-  , ("nFormForK", nFormForK)
+  [ ("multiVerK", multiVerK) -- T
+  , ("boxToMoreBox", boxToMoreBox) -- F
+  -- , ("extraAtK", extraAtK) -- F
   ]
 
+k4FormulasM :: [(String, Int -> FormM)]
+k4FormulasM =
+  [ ("boxToMoreBox", boxToMoreBox) -- T
+  , ("boxToFewerBox", boxToFewerBox) -- F
+  ]
 
+glFormulasM :: [(String, Int -> FormM)]
+glFormulasM =
+  [ ("lobBoxes", lobBoxes) -- T
+  , ("boxToFewerBox", boxToFewerBox) -- F
+  ]
 
+s4FormulasM :: [(String, Int -> FormM)]
+s4FormulasM =
+  [ ("boxToFewerBox", boxToFewerBox) -- T
+  , ("lobBoxes", lobBoxes) -- F
+  ]

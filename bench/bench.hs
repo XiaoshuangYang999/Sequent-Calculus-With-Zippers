@@ -17,48 +17,49 @@ import General
 import CPL
 import IPL
 import K
--- import GL -- TODO
--- import K4 -- TODO
--- import S4 -- TODO
+import GL
+import K4
+import S4
 import PForm
 import MForm
-
-
--- | 8 propositional formula generators
-propFormulas :: [(String, Int -> FormP)]
-propFormulas= [ ("disPhiPie-R", disPhiPieL)
-              , ("disPhiPie-R", disPhiPieR)
-              , ("disPie-L", disPieL)
-              , ("disPie-R", disPieR)
-              , ("conPie-L", conPieL)
-              , ("conPie-R", conPieR)
-              , ("conBot-L", conBotL)
-              , ("conBot-R", conBotR)
-              ]
-
--- | 3 modal formula generators
-modalFormulas :: [(String, Int -> FormM)]
-modalFormulas = [ ("boxesTop", boxesTop)
-                , ("formForK", formForK)
-                , ("nFormForK", nFormForK)
-                ]
 
 propItems :: [(String, Int -> Bool)]
 propItems =
   [ (fS ++ "-" ++ lS ++ "-" ++ pS , prover logic . formula)
-  | (fS, formula) <- propFormulas
-  , (pS, prover) <- [("Zip", isProvableZ), ("Tree", isProvableT)]
-  , (lS, logic) <- [("G3C", classical), ("G3I", intui) ] ]
+  | (fS, formula) <- allFormulasP
+  , (pS, prover) <- [("GenZ", isProvableZ), ("GenT", isProvableT)]
+  , (lS, logic) <- [("CPL", classical), ("IPL", intui) ] ]
 
-modalItems :: [(String, Int -> Bool)]
-modalItems =
+kItems :: [(String, Int -> Bool)]
+kItems =
   [ (fS ++ "-" ++ lS ++ "-" ++ pS, prover logic . formula)
-  | (fS, formula) <- modalFormulas ++ map (fmap (pTom .)) propFormulas
-  , (pS, prover) <- [("Zip", isProvableZ), ("Tree", isProvableT)]
-  , (lS, logic) <- [("G3K", k)] ]
+  | (fS, formula) <- propFormulasM
+  , (pS, prover) <- [("GenZ", isProvableZ), ("GenT", isProvableT)]
+  , (lS, logic) <- [("K", k)] ]
+-- ++ boxesFormulasM ++ kFormulasM
+k4Items :: [(String, Int -> Bool)]
+k4Items =
+  [ (fS ++ "-" ++ lS ++ "-" ++ pS, prover logic . formula)
+  | (fS, formula) <- propFormulasM
+  , (pS, prover) <- [("GenZ", isProvableZ), ("GenT", isProvableT)]
+  , (lS, logic) <- [("K4", kfour)] ]
+
+glItems :: [(String, Int -> Bool)]
+glItems =
+  [ (fS ++ "-" ++ lS ++ "-" ++ pS, prover logic . formula)
+  | (fS, formula) <- propFormulasM
+  , (pS, prover) <- [("GenZ", isProvableZ), ("GenT", isProvableT)]
+  , (lS, logic) <- [("GL", gl)] ]
+
+s4Items :: [(String, Int -> Bool)]
+s4Items =
+  [ (fS ++ "-" ++ lS ++ "-" ++ pS, prover logic . formula)
+  | (fS, formula) <- propFormulasM
+  , (pS, prover) <- [("GenZ", isProvableZ), ("GenT", isProvableT)]
+  , (lS, logic) <- [("S4", sfour)] ]
 
 benchMain :: IO ()
-benchMain = defaultMainWith myConfig (map mybench (propItems ++ modalItems)) where
+benchMain = defaultMainWith myConfig (map mybench (propItems ++ kItems ++ k4Items ++ glItems ++ s4Items)) where
   range = map (10*) [1..10]
   mybench (name,f) = bgroup name $ map (run f) range
   run f n = bench (show n) $ whnf f n
