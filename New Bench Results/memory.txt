@@ -1,22 +1,4 @@
-(base) yangxiaoshuang@yangxiaoshuangdeMacBook-Pro Sequent-Calculus-With-Zippers % stack bench :Memory
-seqzip-0.1.0.0: unregistering (local
-file changes: bench/memory.hs)
-seqzip> build (lib + bench) with ghc-9.4.8
-Preprocessing library for seqzip-0.1.0.0..
-Building library for seqzip-0.1.0.0..
-ld: warning: -single_module is obsolete
-Preprocessing benchmark 'Memory' for seqzip-0.1.0.0..
-Building benchmark 'Memory' for seqzip-0.1.0.0..
-[1 of 2] Compiling Main [Source file changed]
-[3 of 3] Linking .stack-work/dist/x86_64-osx/ghc-9.4.8/build/Memory/Memory [Objects changed]
-ld: warning: ignoring duplicate libraries: '-lm'
-seqzip> copy/register
-Installing library in /Users/yangxiaoshuang/Downloads/Sequent-Calculus-With-Zippers/.stack-work/install/x86_64-osx/ebc2d89bb37b80be2ae80c1763d3bc785d67e48fda93b99fdf6237ed4b6bdad4/9.4.8/lib/x86_64-osx-ghc-9.4.8/seqzip-0.1.0.0-4OsDnQwDCMj7Q6c6b5F9B3
-Registering library for seqzip-0.1.0.0..
-seqzip> benchmarks
-Running 1 benchmarks...
-Benchmark Memory: RUNNING...
-                    
+           
 Case                                Allocated  GCs
 CPL  disPhiPie-R  GenT  2  True        26,512    0
 CPL  disPhiPie-R  GenZ   2  True       23,080    0
@@ -170,5 +152,69 @@ S4  boxToFewerBox  GenT  2  True       24,512    0
 S4  boxToFewerBox  GenZ   2  True      24,088    0
 S4  lobBoxes  GenT  2  False        2,232,112    0
 S4  lobBoxes  GenZ   2  False         262,960    0
-Benchmark Memory: FINISH
-Completed 2 action(s).
+
+
+
+Case                             Allocated  GCs
+CPL  conBot-R  GenT  10  False      28,536    0
+CPL  conBot-R  GenZ   10  False      2,504    0
+CPL  conBot-L  GenT  10  False      29,136    0
+CPL  conBot-L  GenZ   10  False     17,792    0
+IPL  conBot-R  GenT  10  False      76,688    0
+IPL  conBot-R  GenZ   10  False      3,656    0
+IPL  conBot-L  GenT  10  False      77,288    0
+IPL  conBot-L  GenZ   10  False     38,488    0
+K  conBot-R  GenT  10  False        31,808    0
+K  conBot-R  GenZ   10  False        3,440    0
+K  conBot-L  GenT  10  False        32,408    0
+K  conBot-L  GenZ   10  False       18,728    0
+K4  conBot-R  GenT  10  False       31,808    0
+K4  conBot-R  GenZ   10  False       3,440    0
+K4  conBot-L  GenT  10  False       32,408    0
+K4  conBot-L  GenZ   10  False      18,728    0
+GL  conBot-R  GenT  10  False       44,800    0
+GL  conBot-R  GenZ   10  False       3,664    0
+GL  conBot-L  GenT  10  False       45,400    0
+GL  conBot-L  GenZ   10  False      27,880    0
+S4  conBot-R  GenT  10  False    1,683,808    0
+S4  conBot-R  GenZ   10  False       3,608    0
+S4  conBot-L  GenT  10  False    1,701,408    0
+S4  conBot-L  GenZ   10  False      18,896    0
+
+
+It seems that it always gets stuck with S4
+
+
+Case                            Allocated  GCs
+K  boxesTop  GenT  10  True        19,264    0
+K  boxesTop  GenZ   10  True       18,760    0
+K  boxesBot  GenT  10  False       17,288    0
+K  boxesBot  GenZ   10  False      15,768    0
+K4  boxesTop  GenT  10  True       32,304    0
+K4  boxesTop  GenZ   10  True      33,960    0
+K4  boxesBot  GenT  10  False      30,328    0
+K4  boxesBot  GenZ   10  False     30,968    0
+GL  boxesTop  GenT  10  True       27,088    0
+GL  boxesTop  GenZ   10  True      29,224    0
+GL  boxesBot  GenT  10  False      25,160    0
+GL  boxesBot  GenZ   10  False     26,280    0
+S4  boxesTop  GenT  10  True       32,304    0
+S4  boxesTop  GenZ   10  True      33,960    0
+S4  boxesBot  GenT  10  False      34,272    0
+S4  boxesBot  GenZ   10  False     33,376    0
+
+
+The weird results are gone too
+
+Case                                   Allocated  GCs
+S4  boxToFewerBox  GenT  5  True         302,216    0
+S4  boxToFewerBox  GenZ   5  True        302,528    0
+S4  lobBoxes  GenT  5  False       2,778,144,416  668
+S4  lobBoxes  GenZ   5  False          3,018,312    0
+
+
+Case                             Allocated  GCs
+IPL  conPie-R  GenT  10  False     696,856    0
+IPL  conPie-R  GenZ   10  False     19,504    0
+IPL  conPie-L  GenT  10  False     698,096    0
+IPL  conPie-L  GenZ   10  False    166,000    0

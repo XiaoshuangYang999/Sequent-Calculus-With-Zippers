@@ -28,8 +28,8 @@ propItems =
   [ (fS ++ "-" ++ lS ++ "-" ++ pS , prover logic . formula)
   | (fS, formula) <- allFormulasP
   , (pS, prover) <- [("GenZ", isProvableZ), ("GenT", isProvableT)]
-  , (lS, logic) <- [("CPL", classical), ("IPL", intui) ] ]
-
+  , (lS, logic) <- [("IPL", intui) ] ]
+--("CPL", classical)
 kItems :: [(String, Int -> Bool)]
 kItems =
   [ (fS ++ "-" ++ lS ++ "-" ++ pS, prover logic . formula)
@@ -59,7 +59,7 @@ s4Items =
   , (lS, logic) <- [("S4", sfour)] ]
 
 benchMain :: IO ()
-benchMain = defaultMainWith myConfig (map mybench (propItems ++ kItems ++ k4Items ++ glItems ++ s4Items)) where
+benchMain = defaultMainWith myConfig (map mybench propItems) where
   range = map (10*) [1..10]
   mybench (name,f) = bgroup name $ map (run f) range
   run f n = bench (show n) $ whnf f n

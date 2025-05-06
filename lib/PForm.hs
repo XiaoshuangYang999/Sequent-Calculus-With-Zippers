@@ -83,10 +83,10 @@ allFormulasP =[
   -- , ("disPhiPie-L", disPhiPieL)
   -- , ("disPie-R", disPieR)
   -- , ("disPie-L", disPieL)
-  -- , ("conPie-R", conPieR)
-  -- , ("conPie-L", conPieL)
-   ("conBot-R", conBotR)
-  , ("conBot-L", conBotL)
+   ("conPie-R", conPieR)
+  , ("conPie-L", conPieL)
+  --  ("conBot-R", conBotR)
+  -- , ("conBot-L", conBotL)
   -- , ("conTop-R", conTopR) -- new
   -- , ("conTop-L", conTopL) -- new
   ]
