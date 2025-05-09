@@ -25,7 +25,7 @@ krule _ fs (Right (Box f)) = Set.toList $ Set.map (func f) $ Set.powerSet . remo
   removeBoxLeft :: Sequent FormM -> Sequent FormM
   removeBoxLeft  = setComprehension isLeftBox fromBox
   func :: FormM -> Sequent FormM -> (RuleName,[Sequent FormM])
-  func g seqs = ("☐K", [Set.insert (Right g) seqs])
+  func g seqs = ("☐k", [Set.insert (Right g) seqs])
 krule _ _ _ = []
 
 isLeftBox :: Either FormM FormM -> Bool
