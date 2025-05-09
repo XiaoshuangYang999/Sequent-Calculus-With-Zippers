@@ -287,6 +287,8 @@ texRuleName r = "$" ++ concatMap f r ++ "$" where
     'e' -> "\\mathsf{e}"
     '⊥' -> "\\bot"
     '4' -> "\\mathsf{4}"
+    'k' -> "_{\\mathsf{k}}"
+    '☐' -> "\\Box"
     c -> [c]
 
 -- | General LaTeX code to show a proof using the buss package.

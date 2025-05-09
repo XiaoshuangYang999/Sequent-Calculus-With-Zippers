@@ -13,7 +13,7 @@ import Data.List as List
 a1,b1,c1,d1,e1 :: FormM
 [a1,b1,c1,d1,e1] = map AtM ['a','b','c','d','e']
 
--- Holds in all modal logics
+-- Holds in all modal logics -- FIXME: no, does not hold?
 ktest :: FormM
 ktest = ImpM (Box (ImpM a1 b1)) (ImpM (Box a1) (ImpM (Box b1) (Box c1)))
 
