@@ -12,7 +12,7 @@ import GHC.Generics
 import System.IO (hGetContents)
 import System.Process
 import Test.QuickCheck
-
+import Debug.Trace
 import Basics
 
 type Sequent f = Set (Either f f)
@@ -171,8 +171,8 @@ isClosedZP :: Eq f => ZipProof f -> Bool
 isClosedZP (ZP fs Top) = isClosedPf fs
 isClosedZP (ZP fs p) = isClosedPf fs &&  (isClosedZP . switch $ ZP fs p)
 
-extendZ  :: (Ord f,Eq f) => Logic f -> ZipProof f -> [ZipProof f]
-extendZ l zp@(ZP (Node fs Nothing) p) =
+extendZ  :: (Ord f,Eq f,Show f) => Logic f -> ZipProof f -> [ZipProof f]
+extendZ l zp@(ZP (Node fs Nothing) p) = trace (ppSeq fs) $
   case ( List.filter (isApplicableRule (histOf zp) fs) (safeRules l)
        , unsafeRules l) of
   -- The safe rule r can be applied:
@@ -182,13 +182,13 @@ extendZ l zp@(ZP (Node fs Nothing) p) =
                               nextZP
                                 | null results = switch    newZP -- no children, i.e. proved
                                 | otherwise   = move_down newZP
-                          in extendZ l nextZP
+                          in trace therule $ extendZ l nextZP
   -- At least one unsafe rule can be applied:
-  ([], rs@(_:_))    -> List.concatMap applyRule rs
+  ([], rs@(_:_))    -> trace "-> R" List.concatMap applyRule rs
     where
       applyRule r
         | any isClosedZP nps = List.take 1 (List.filter isClosedZP nps)
-        | otherwise = [ZP (Node fs Nothing) p]
+        | otherwise = trace ("applicable formulas for -> R: " ++ ppSeq gs ++ " No closed proof") [ZP (Node fs Nothing) p]
         where
           gs = Set.filter (\g -> isApplicable (histOf zp) fs g r) fs
           nps = concat $ List.concatMap tryExtendZ gs
@@ -199,13 +199,13 @@ extendZ l zp@(ZP (Node fs Nothing) p) =
 
 extendZ _ zp@(ZP (Node _ (Just _ )) _) = [zp] -- needed after switch
 
-proveZ :: (Eq f, Ord f) => Logic f -> f -> [Proof f]
+proveZ :: (Eq f, Ord f, Show f) => Logic f -> f -> [Proof f]
 proveZ l f = List.map fromZip $ extendZ l (startForZ f)
 
-isProvableZ :: (Eq f, Ord f) => Logic f -> f -> Bool
+isProvableZ :: (Eq f, Ord f, Show f) => Logic f -> f -> Bool
 isProvableZ l f = any isClosedZP $ extendZ l (startForZ f)
 
-proveprintZ :: (Eq f, Ord f) => Logic f -> f -> Proof f
+proveprintZ :: (Eq f, Ord f, Show f) => Logic f -> f -> Proof f
 proveprintZ l f = if isProvableZ l f
                 then head $  List.filter isClosedPf (proveZ l f)
                 else head (proveZ l f)
@@ -378,7 +378,7 @@ isAxiomM _ fs _ = [ ("ax", [])
                   | any (\f -> isatomM f && Right f `Set.member` fs) (leftsSet fs) ]
 
 leftBotM :: Rule FormM
-leftBotM _ fs _ = [ ("L⊥", [])
+leftBotM _ fs _ = [ ("⊥L", [])
                   | Left BotM `Set.member` fs ]
 
 negM :: FormM -> FormM
