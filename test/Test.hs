@@ -6,7 +6,7 @@ import Test.QuickCheck
 
 import General
 import CPL
-import IPL
+import IPL2
 import K
 import K4
 import GL
@@ -64,6 +64,9 @@ main = hspec $ do
       it ("Double negation: " ++ show dn) $ not $ isProvableZ intui dn
       it ("Excluded middle: " ++ show em) $ not $ isProvableZ intui em
       it ("Pierce's law: " ++ show pierce) $ not $ isProvableZ intui pierce
+      it (show t5) $ not $ isProvableZ intui t5
+      it (show t6) $ not $ isProvableZ intui t6
+      it "conPieL 100" $ not $ isProvableZ intui $ conPieL 100
 
     describe "IPL.isProvableT" $ do
       it "Top" $ isProvableT intui topP
@@ -80,6 +83,8 @@ main = hspec $ do
       it ("Double negation: " ++ show dn) $ not $ isProvableT intui dn
       it ("Excluded middle: " ++ show em) $ not $ isProvableT intui em
       it ("Pierce's law: " ++ show pierce) $ not $ isProvableT intui pierce
+      it (show t5) $ not $ isProvableT intui t5
+      it (show t6) $ not $ isProvableT intui t6
 
     describe "K.isProvableZ" $ do
       -- it "Top" $ isProvableZ k $ pTom topP
@@ -148,7 +153,7 @@ main = hspec $ do
       it "Consistency axiom" $ not $ isProvableT kfour consistency
       it "boxToFewerBox 4" $ not $ isProvableT kfour (boxToFewerBox 4)
 
-    -- GL tests
+    -- -- GL tests
     describe "GL.isProvableZ" $ do
       it "K axiom" $ isProvableZ gl kaxiom
       it "4 axiom" $ isProvableZ gl fouraxiom
@@ -170,7 +175,7 @@ main = hspec $ do
       it "Consistency axiom" $ not $ isProvableT gl consistency
       it "boxToFewerBox 4" $ not $ isProvableT gl (boxToFewerBox 4)
 
-    -- S4 tests
+    -- -- S4 tests
     describe "S4.isProvableZ" $ do
       it "K axiom" $ isProvableZ sfour kaxiom
       it "4 axiom" $ isProvableZ sfour fouraxiom

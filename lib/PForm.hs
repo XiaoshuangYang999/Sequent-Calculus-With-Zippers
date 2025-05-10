@@ -4,8 +4,6 @@ module PForm where
 import General
 import Data.List as List
 
-
-
 top,o,p,q,r :: FormP
 top = negP BotP
 [o,p,q,r] = List.map AtP ['o','p','q','r']
@@ -27,11 +25,14 @@ pierce :: FormP
 pierce = ImpP (ImpP (ImpP p q) p) p
 
 -- | List of tests
-t1,t2,t3,t4 :: FormP
-[t1,t2,t3,t4] = [ ImpP p p
+t1,t2,t3,t4,t5,t6:: FormP
+[t1,t2,t3,t4,t5,t6] = [ ImpP p p
                 , negP (negP em)
                 , ImpP (ImpP p (ImpP p q)) (ImpP p q)
-                , ImpP (ImpP pierce q) q]
+                , ImpP (ImpP pierce q) q
+                , negP $ negP $ ImpP p (ImpP q r)
+                , negP $ negP $ DisP p $ negP q
+                ]
 
 phi :: FormP
 phi = ImpP (ConP p (ImpP p q)) (ImpP (ImpP p q) q)
