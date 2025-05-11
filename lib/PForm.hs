@@ -45,25 +45,35 @@ disPhiPieR k = foldr DisP phi (replicate (2*k) pierce )
 -- True in CPL, IPL
 disPhiPieL :: Int -> FormP
 disPhiPieL k = foldl DisP phi (replicate (2*k) pierce )
--- True in CPL
+-- True in CPL, false in IPL
 disPieR :: Int -> FormP
 disPieR k = foldr DisP pierce (replicate (2*k) pierce )
--- True in CPL
+-- True in CPL, false in IPL
 disPieL :: Int -> FormP
 disPieL k = foldl DisP pierce (replicate (2*k) pierce )
--- True in CPL
+-- True in CPL, false in IPL
 conPieR :: Int -> FormP
 conPieR k = foldr ConP pierce (replicate (2*k) pierce )
--- True in CPL
+-- True in CPL, false in IPL
 conPieL :: Int -> FormP
 conPieL k = foldl ConP pierce (replicate (2*k) pierce )
+-- True in CPL, false in IPL
+phiImpPie :: Int -> FormP
+phiImpPie 0 = pierce
+phiImpPie n = ImpP phi $ phiImpPie (n-1)
+
 -- True
 conTopR :: Int -> FormP
 conTopR k = foldr ConP topP (replicate k topP )
 -- True
 conTopL :: Int -> FormP
 conTopL k = foldl ConP topP (replicate k topP )
-
+-- True
+disTopR :: Int -> FormP
+disTopR k = foldr DisP topP (replicate k topP )
+-- True
+disTopL :: Int -> FormP
+disTopL k = foldl DisP topP (replicate k topP )
 
 -- False
 conBotR :: Int -> FormP
@@ -78,16 +88,23 @@ disBotR k = foldr DisP BotP (replicate k BotP )
 disBotL :: Int -> FormP
 disBotL k = foldl DisP BotP (replicate k BotP )
 
+
+
 allFormulasP :: [(String, Int -> FormP)]
 allFormulasP =[
-  --  ("disPhiPie-R", disPhiPieR)
-  -- , ("disPhiPie-L", disPhiPieL)
-  -- , ("disPie-R", disPieR)
-  -- , ("disPie-L", disPieL)
-   ("conPie-R", conPieR)
+   ("disPhiPie-R", disPhiPieR)
+  , ("disPhiPie-L", disPhiPieL)
+  , ("disPie-R", disPieR)
+  , ("disPie-L", disPieL)
+  , ("conPie-R", conPieR)
   , ("conPie-L", conPieL)
-  --  ("conBot-R", conBotR)
-  -- , ("conBot-L", conBotL)
-  -- , ("conTop-R", conTopR) -- new
-  -- , ("conTop-L", conTopL) -- new
+  , ("conBot-R", conBotR)
+  , ("conBot-L", conBotL)
+  , ("disBot-R", disBotR) -- new
+  , ("disBot-L", disBotL) -- new
+  , ("conTop-R", conTopR) -- new
+  , ("conTop-L", conTopL) -- new
+  , ("disTop-R", disTopR) -- new
+  , ("disTop-L", disTopL) -- new
+  , ("phiImpPie",phiImpPie) -- new
   ]

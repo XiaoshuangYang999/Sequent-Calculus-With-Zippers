@@ -85,12 +85,17 @@ extraAtK :: Int -> FormM
 extraAtK n = ImpM (Box (List.foldr ImpM (AtM 'a') (listOfAt n ++ [AtM 'b'])))
                 $ foldr (ImpM . Box) (Box (AtM 'a')) (listOfAt n)
 
+-- Bench formula for S4. Not provable
+negBoxes :: Int -> FormM
+negBoxes n = negM $ Box $ negM $ boxes n a1 
+
+
 propFormulasM :: [(String, Int -> FormM)]
 propFormulasM =  map (fmap (pTom .)) allFormulasP
 
 boxesFormulasM :: [(String, Int -> FormM)]
 boxesFormulasM =
-  [ ("boxesTop", boxesTop) -- special case. 
+  [ ("boxesTop", boxesTop) -- T used to be faster than Z 
   , ("boxesBot", boxesBot)
   ]
 
@@ -98,7 +103,7 @@ kFormulasM :: [(String, Int -> FormM)]
 kFormulasM =
   [ ("multiVerK", multiVerK) -- T
   , ("boxToMoreBox", boxToMoreBox) -- F
-  -- , ("extraAtK", extraAtK) -- F
+  , ("extraAtK", extraAtK) -- F
   ]
 
 k4FormulasM :: [(String, Int -> FormM)]
@@ -115,6 +120,8 @@ glFormulasM =
 
 s4FormulasM :: [(String, Int -> FormM)]
 s4FormulasM =
-  [ ("boxToFewerBox", boxToFewerBox) -- T
-  , ("lobBoxes", lobBoxes) -- F
+  [ 
+  --   ("boxToFewerBox", boxToFewerBox) -- T
+  -- , ("lobBoxes", lobBoxes) -- F
+   ("negBoxes", negBoxes) -- F
   ]

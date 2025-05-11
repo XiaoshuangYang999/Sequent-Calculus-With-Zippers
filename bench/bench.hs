@@ -15,7 +15,7 @@ import Numeric
 import System.Directory
 import General
 import CPL
-import IPL
+import IPL2
 import K
 import GL
 import K4

@@ -4,7 +4,7 @@ import Data.List
 import Weigh
 import General ( isProvableT, isProvableZ, FormM, FormP, Logic )
 import CPL
-import IPL
+import IPL2
 import K
 import K4
 import GL
@@ -15,15 +15,15 @@ import MForm
 
 main :: IO ()
 main = mainWith $ do
-  mapM_
-    ( \ (label, logic, method, form, n) -> func label (method logic . form) n)
-    allCasesP
+  -- mapM_
+  --   ( \ (label, logic, method, form, n) -> func label (method logic . form) n)
+  --   allCasesP
   -- mapM_
   --   ( \ (label, logic, method, form, n) -> func label (method logic . form) n)
   --   propCasesM
-  -- mapM_
-  --   ( \ (label, logic, method, form, n) -> func label (method logic . form) n)
-  --   boxesCasesM
+  mapM_
+    ( \ (label, logic, method, form, n) -> func label (method logic . form) n)
+    boxesCasesM
   -- mapM_
   --   ( \ (label, logic, method, form, n) -> func label (method logic . form) n)
   --   kCasesM
@@ -43,12 +43,13 @@ type Prover f = Logic f -> f -> Bool
 allCasesP :: [(String, Logic FormP, Prover FormP, Int -> FormP, Int)]
 allCasesP =
   [ (intercalate "  " [logicStr, formStr, methodStr, show n, show result], logic, method, formFor, n)
-  | (logicStr, logic)   <- [ --("CPL", classical)
-                            ("IPL", intui) ]
+  | (logicStr, logic)   <- [ ("CPL", classical)
+                           , ("IPL", intui) 
+                          ]
   , (formStr, formFor)  <- allFormulasP
   , (methodStr, method) <- [ ("GenT", isProvableT)
                            , ("GenZ ", isProvableZ) ]
-  , n <- [10]
+  , n <- [100]
   , let result = method logic (formFor n)
   ]
 
@@ -62,7 +63,7 @@ propCasesM =
   , (formStr, formFor)  <- propFormulasM
   , (methodStr, method) <- [ ("GenT", isProvableT)
                            , ("GenZ ", isProvableZ) ]
-  , n <- [10]
+  , n <- [100]
   , let result = method logic (formFor n)
   ]
 
@@ -76,7 +77,7 @@ boxesCasesM =
   , (formStr, formFor)  <- boxesFormulasM
   , (methodStr, method) <- [ ("GenT", isProvableT)
                            , ("GenZ ", isProvableZ) ]
-  , n <- [10]
+  , n <- [1000]
   , let result = method logic (formFor n)
   ]
 
@@ -120,6 +121,6 @@ s4CasesM =
   , (formStr, formFor)  <- s4FormulasM
   , (methodStr, method) <- [ ("GenT", isProvableT)
                            , ("GenZ ", isProvableZ) ]
-  , n <- [5]
+  , n <- [1000]
   , let result = method logic (formFor n)
   ]
