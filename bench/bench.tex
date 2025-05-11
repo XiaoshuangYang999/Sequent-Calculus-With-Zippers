@@ -4,25 +4,58 @@
 
 \usepackage[margin=2cm]{geometry}
 
-\title{Benchmark}
+\title{Benchmark results for GenZ and GenT}
 
 \begin{document}
 
-\begin{figure}
-  \centering
-  \begin{tikzpicture}
-    \pgfplotstableread{results.csv.dat}
-    \datatable
-    \begin{axis}[legend pos=north east, width=0.95\linewidth, grid=major,
-      ylabel=seconds, ymode=log, ymax=3000,
-      xlabel=length of the formula,
-      unbounded coords=jump]
-      \addlegendentry{conBot-R-S4-GenZ}            \addplot table[y=conBot-R-S4-GenZ] from \datatable;
-      \addlegendentry{conBot-R-S4-GenT}            \addplot table[y=conBot-R-S4-GenT] from \datatable;
-      \addlegendentry{conBot-L-S4-GenZ}            \addplot table[y=conBot-L-S4-GenZ] from \datatable;
-      \addlegendentry{conBot-L-S4-GenT}            \addplot table[y=conBot-L-S4-GenT] from \datatable;
-    \end{axis}
-  \end{tikzpicture}
-\end{figure}
+Note: ``Tree'' is GenT and ``Zip'' is GenZ, and ``L'' and ``R'' indicate the \texttt{foldl} and \texttt{foldr} variants.
+
+\pgfplotsset{
+  every axis/.style={
+    font=\scriptsize,
+    legend pos=north west, grid=major, width=6.3cm,
+    ylabel=seconds, ymode=log, ymax=0.01,
+    xlabel=formula length,
+  }
+}
+\pgfplotsset{
+  every axis legend/.append style={
+    font=\small, legend image post style={scale=0.4},
+    legend columns=-1,
+    font=\scriptsize,
+  }
+}
+
+\centering
+
+% #1 = formula
+% #2 = logic
+\newcommand{\fourplot}[2]{
+\begin{tikzpicture}
+  \pgfplotstableread{results.csv.dat}\datatable
+  \begin{axis}[xlabel=\textbf{#1 #2} formula length]
+    \addlegendentry{TreeR} \addplot table[y=#1-R-#2-GenT] from \datatable;
+    \addlegendentry{ZipR}  \addplot table[y=#1-R-#2-GenZ] from \datatable;
+    \addlegendentry{TreeL} \addplot table[y=#1-L-#2-GenT] from \datatable;
+    \addlegendentry{ZipL}  \addplot table[y=#1-L-#2-GenZ] from \datatable;
+  \end{axis}
+\end{tikzpicture}
+}
+
+\newcommand{\twoplot}[2]{
+\begin{tikzpicture}
+  \pgfplotstableread{results.csv.dat}\datatable
+  \begin{axis}[xlabel=\textbf{#1 #2} formula length, ymax=0.001, xshift=6.2cm]
+    \addlegendentry{Tree} \addplot table[y=#1-#2-GenT] from \datatable;
+    \addlegendentry{Zip}  \addplot table[y=#1-#2-GenZ] from \datatable;
+  \end{axis}
+\end{tikzpicture}
+}
+
+% TODO: include same list as benchmarks here as in Makefile
+
+\fourplot{conBot}{CPL}
+
+\twoplot{boxesTop}{K}
 
 \end{document}

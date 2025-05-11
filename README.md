@@ -52,3 +52,8 @@ This will write code into `temp.tex` and then run `pdflatex` on it.
 The result looks as follows.
 
 ![](doc/GL-example.png)
+
+## Benchmarks
+
+You should have LaTeX installed.
+Then you can run `make bench` to get runtime plots in `bench/bench.pdf`.
