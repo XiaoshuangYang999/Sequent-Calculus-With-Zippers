@@ -5,26 +5,32 @@
 \usepackage[margin=2cm]{geometry}
 
 \title{Runtime benchmark results for GenZ and GenT}
+\author{}
 
 \begin{document}
+
+\maketitle
 
 Note: ``Tree'' is GenT and ``Zip'' is GenZ, and ``L'' and ``R'' indicate the \texttt{foldl} and \texttt{foldr} variants.
 
 \pgfplotsset{
   every axis/.style={
     font=\scriptsize,
-    legend pos=north west, grid=major, width=6.3cm,
-    ylabel=seconds, ymode=log, ymax=0.01,
+    legend pos=north west, grid=major, width=8cm,
+    ylabel=seconds, ymode=log,
     xlabel=formula length,
+    unbounded coords=jump,
   }
 }
 \pgfplotsset{
   every axis legend/.append style={
-    font=\small, legend image post style={scale=0.4},
+    font=\small, legend image post style={scale=0.5},
     legend columns=-1,
     font=\scriptsize,
   }
 }
+
+\bigskip
 
 \centering
 
@@ -47,7 +53,7 @@ Note: ``Tree'' is GenT and ``Zip'' is GenZ, and ``L'' and ``R'' indicate the \te
 \newcommand{\twoplot}[2]{
 \begin{tikzpicture}
   \pgfplotstableread{results.csv.dat}\datatable
-  \begin{axis}[xlabel=\textbf{#1 #2} formula length, ymax=0.001, xshift=6.2cm]
+  \begin{axis}[xlabel=\textbf{#1 #2} formula length]
     \addlegendentry{Tree} \addplot table[y=#1-#2-GenT] from \datatable;
     \addlegendentry{Zip}  \addplot table[y=#1-#2-GenZ] from \datatable;
   \end{axis}
@@ -55,11 +61,11 @@ Note: ``Tree'' is GenT and ``Zip'' is GenZ, and ``L'' and ``R'' indicate the \te
 }
 
 \fourplot{conPie}{IPL}
-
 \twoplot{boxesTop}{K}
 
-\twoplot{lobBoxes}{K4}
+\bigskip
 
+\twoplot{lobBoxes}{K4}
 \twoplot{lobBoxes}{GL}
 
 \end{document}
