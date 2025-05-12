@@ -33,7 +33,7 @@ tests:
       - hspec
 
 benchmarks:
-  Bench:
+  runtime:
     source-dirs: bench
     main: bench.hs
     dependencies:
@@ -46,7 +46,7 @@ benchmarks:
       - seqzip
       - split
       - vector
-  Memory:
+  memory:
     source-dirs: bench
     ghc-options: -rtsopts
     main: memory.hs

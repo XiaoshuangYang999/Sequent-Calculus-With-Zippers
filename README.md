@@ -55,5 +55,8 @@ The result looks as follows.
 
 ## Benchmarks
 
-You should have LaTeX installed.
-Then you can run `make bench` to get runtime plots in `bench/bench.pdf`.
+You should have LaTeX and [pandoc](https://pandoc.org/) installed.
+Then run `make bench/runtime.pdf` and `make bench/memory.pdf`.
+
+Example results are available at
+<https://github.com/XiaoshuangYang999/Sequent-Calculus-With-Zippers/releases>.
