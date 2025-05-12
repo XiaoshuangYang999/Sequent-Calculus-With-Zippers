@@ -12,8 +12,8 @@ cradle:
     - path: "./test"
       component: "seqzip:test:Test"
 
-    - path: "./bench/bench.hs"
-      component: "seqzip:bench:Bench"
+    - path: "./bench/runtime.hs"
+      component: "seqzip:bench:runtime"
 
     - path: "./bench/memory.hs"
-      component: "seqzip:bench:Memory"
+      component: "seqzip:bench:memory"

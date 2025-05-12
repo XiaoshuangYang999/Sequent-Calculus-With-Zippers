@@ -56,6 +56,9 @@ isApplicableRule hs fs r = any (\f -> isApplicable hs fs f r) fs
 data Logic f = Log { safeRules   :: [Rule f]
                    , unsafeRules :: [Rule f] }
 
+-- | A prover takes a logic and a formula and returns a Boolean.
+type Prover f = Logic f -> f -> Bool
+
 -- * Tree Proofs
 
 newtype ProofWithH f = HP (History f, Proof f)
@@ -121,7 +124,7 @@ extendT _ (HP (_,Node _ (Just _))) = error "already extended"
 proveT :: (Eq f, Show f,Ord f) => Logic f -> f -> [Proof f]
 proveT l f = List.map hpSnd $ extendT l (startForT f)
 
-isProvableT :: (Eq f, Show f, Ord f) => Logic f -> f -> Bool
+isProvableT :: (Eq f, Show f, Ord f) => Prover f
 isProvableT l f = any isClosedPf (proveT l f)
 
 proveprintT :: (Eq f, Show f,Ord f) => Logic f -> f -> Proof f
@@ -202,7 +205,7 @@ extendZ _ zp@(ZP (Node _ (Just _ )) _) = [zp] -- needed after switch
 proveZ :: (Eq f, Ord f) => Logic f -> f -> [Proof f]
 proveZ l f = List.map fromZip $ extendZ l (startForZ f)
 
-isProvableZ :: (Eq f, Ord f) => Logic f -> f -> Bool
+isProvableZ :: (Eq f, Ord f) => Prover f
 isProvableZ l f = any isClosedZP $ extendZ l (startForZ f)
 
 proveprintZ :: (Eq f, Ord f) => Logic f -> f -> Proof f
@@ -286,7 +289,7 @@ texRuleName r = "$" ++ concatMap f r ++ "$" where
     'l' -> "\\mathsf{l}"
     'e' -> "\\mathsf{e}"
     '⊥' -> "\\bot"
-    '4' -> "\\mathsf{4}"
+    '4' -> "_{\\mathsf{4}}"
     'k' -> "_{\\mathsf{k}}"
     '☐' -> "\\Box"
     c -> [c]

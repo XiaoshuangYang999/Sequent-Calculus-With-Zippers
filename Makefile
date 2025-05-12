@@ -16,10 +16,11 @@ clean:
 
 # TODO adjust list of benchmark cases
 
+SELECTION = conPieL-IPL- conPieR-IPL- boxesTop-K- lobBoxes-K4- lobBoxes-GL-
+
 bench/runtime.pdf:
 	@(which pdflatex > /dev/null)|| (echo "Could not find pdflatex, please install it first." && false)
-	stack bench :Bench --benchmark-arguments \
-		"boxesTop-K-GenZ/20 boxesTop-K-GenZ/40 boxesTop-K-GenT/20 boxesTop-K-GenT/40 conBot-R-CPL-GenT/20 conBot-R-CPL-GenT/40 conBot-R-CPL-GenZ/20 conBot-R-CPL-GenZ/40 conBot-L-CPL-GenT/20 conBot-L-CPL-GenT/40 conBot-L-CPL-GenZ/20 conBot-L-CPL-GenZ/40"
+	stack bench :runtime --benchmark-arguments "$(SELECTION)"
 	cd bench && pdflatex -interaction=nonstopmode runtime
 
 bench-runtime-list:
@@ -28,8 +29,8 @@ bench-runtime-list:
 bench/memory.pdf:
 	@(which pandoc > /dev/null) || (echo "Could not find pandoc, please install it first." && false)
 	@(which pdflatex > /dev/null) || (echo "Could not find pdflatex, please install it first." && false)
-	stack bench seqzip:bench:memory --no-run-benchmarks # check if it compiles
-	stack bench seqzip:bench:memory --ba "--markdown " > bench/table.md 2>&1
+	stack bench :memory --no-run-benchmarks # check if it compiles
+	stack bench :memory --ba "--markdown " > bench/table.md 2>&1
 	echo "|Logic|Formula|Prover|Size|Result|Allocated|GCs|\n|:---|:---|:---|:---|:---|---:|---:|" > bench/memory.md
 	cd bench && (cat table.md | sed '0,/--:/d' |  head -n -1 | sort) >> memory.md
 	cd bench && (pandoc -t latex -V geometry:margin=2cm -s memory.md > memory.tex)

@@ -106,5 +106,5 @@ allFormulasP =[
   , ("conTop-L", conTopL) -- new
   , ("disTop-R", disTopR) -- new
   , ("disTop-L", disTopL) -- new
-  , ("phiImpPie",phiImpPie) -- new
+  -- , ("phiImpPie",phiImpPie) -- only go until 20
   ]

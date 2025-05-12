@@ -45,7 +45,7 @@ additionRule fun _ fs g =
 
 -- | Helper function for replaceRuleIPLunsafe.
 applyIPL :: Sequent FormP -> Either FormP FormP -> [Sequent FormP] -> [Sequent FormP]
-applyIPL fs f = List.map (Set.insert f (leftOfSet fs) `Set.union`)
+applyIPL fs _ = List.map (leftOfSet fs `Set.union`)
 
 -- | Like `additionRule` but also doing a global loopcheck.
 additionRuleNoLoop :: (Either FormP FormP -> [(RuleName, [Sequent FormP])]) -> Rule FormP

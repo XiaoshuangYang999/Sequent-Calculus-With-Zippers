@@ -13,9 +13,10 @@ import Data.Scientific
 import qualified Data.Vector as V
 import Numeric
 import System.Directory
+
 import General
 import CPL
-import IPL2
+import IPL
 import K
 import GL
 import K4
@@ -23,48 +24,35 @@ import S4
 import PForm
 import MForm
 
-propItems :: [(String, Int -> Bool)]
-propItems =
-  [ (fS ++ "-" ++ lS ++ "-" ++ pS , prover logic . formula)
-  | (fS, formula) <- allFormulasP
-  , (pS, prover) <- [("GenZ", isProvableZ), ("GenT", isProvableT)]
-  , (lS, logic) <- [("CPL", classical), ("IPL", intui) ] ]
+-- | Set of benchmarks for runtime.
+allItems :: [Case]
+allItems =
+  -- selected formula set:
+     makeCases [ ("IPL", intui) ] [("conPieL",conPieL), ("conPieR",conPieR)] [10,20..100] -- not provable
+  ++ makeCases [ ("K", k) ] [("boxesTop",boxesTop)] [10,20..100] -- provable
+  ++ makeCases [ ("K4", kfour) ] [("lobBoxes",lobBoxes)] [1..10] -- not provable
+  ++ makeCases [ ("GL", gl) ] [("lobBoxes",lobBoxes)] [1..10] -- provable
+  {-
+  -- full formula set:
+     makeCases [("CPL", classical), ("IPL", intui) ] allFormulasP [10] -- ,20..100
+  ++ makeCases [("K", k)] (propFormulasM ++ boxesFormulasM ++ kFormulasM) [10] -- ,20..100
+  ++ makeCases [("K4", kfour)] propFormulasM [10] -- ,20..100
+  ++ makeCases [("GL", gl)] propFormulasM [10]
+  ++ makeCases [("S4", sfour)] propFormulasM [10]
+  -}
 
-kItems :: [(String, Int -> Bool)]
-kItems =
-  [ (fS ++ "-" ++ lS ++ "-" ++ pS, prover logic . formula)
-  | (fS, formula) <- propFormulasM ++ boxesFormulasM ++ kFormulasM
-  , (pS, prover) <- [("GenZ", isProvableZ), ("GenT", isProvableT)]
-  , (lS, logic) <- [("K", k)] ]
+type Case = (String, Int -> Bool, [Int])
 
-k4Items :: [(String, Int -> Bool)]
-k4Items =
-  [ (fS ++ "-" ++ lS ++ "-" ++ pS, prover logic . formula)
-  | (fS, formula) <- propFormulasM
+makeCases :: (Ord f, Show f) => [(String, Logic f)] -> [(String, Int -> f)] -> [Int] -> [Case]
+makeCases logics forms sizes =
+  [ (fS ++ "-" ++ lS ++ "-" ++ pS , prover logic . formula, sizes)
+  | (fS, formula) <- forms
   , (pS, prover) <- [("GenZ", isProvableZ), ("GenT", isProvableT)]
-  , (lS, logic) <- [("K4", kfour)] ]
-
-glItems :: [(String, Int -> Bool)]
-glItems =
-  [ (fS ++ "-" ++ lS ++ "-" ++ pS, prover logic . formula)
-  | (fS, formula) <- propFormulasM
-  , (pS, prover) <- [("GenZ", isProvableZ), ("GenT", isProvableT)]
-  , (lS, logic) <- [("GL", gl)] ]
-
-s4Items :: [(String, Int -> Bool)]
-s4Items =
-  [ (fS ++ "-" ++ lS ++ "-" ++ pS, prover logic . formula)
-  | (fS, formula) <- propFormulasM
-  , (pS, prover) <- [("GenZ", isProvableZ), ("GenT", isProvableT)]
-  , (lS, logic) <- [("S4", sfour)] ]
-
-allItems :: [(String, Int -> Bool)]
-allItems = propItems ++ kItems ++ k4Items ++ glItems ++ s4Items
+  , (lS, logic) <- logics ]
 
 benchMain :: IO ()
 benchMain = defaultMainWith myConfig (map mybench allItems) where
-  range = map (10*) [1..10]
-  mybench (name,f) = bgroup name $ map (run f) range
+  mybench (name,f,range) = bgroup name $ map (run f) range
   run f n = bench (show n) $ whnf f n
   myConfig = defaultConfig
     { Criterion.Types.csvFile = Just theCSVname
