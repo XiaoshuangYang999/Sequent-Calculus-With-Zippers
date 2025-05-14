@@ -6,7 +6,9 @@ This repository contains the Haskell implementation of Xiaoshuang Yang's Master'
 
 > Yang, X. (2024). *Sequent Calculus with Zippers*. Master of Logic Thesis, University of Amsterdam.
 
-We are continuing the development of this prover. The `main` branch contains the original code from the thesis, while ongoing updates and improvements will be maintained in a separate branch.
+We are continuing the development of this prover.
+The `thesis-version` branch contains the original code from the thesis,
+while ongoing updates and improvements will be done in the `main` branch.
 
 ## Bash Instructions
 
