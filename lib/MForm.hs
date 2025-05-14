@@ -34,7 +34,7 @@ fouraxiom = ImpM (Box a1) (Box (Box a1))
 
 -- Holds in T,S4
 taxiom :: FormM
-taxiom = ImpM (Box (Box a1)) (Box a1)
+taxiom = ImpM (Box a1) a1
 
 -- Holds in GL
 lobaxiom :: FormM

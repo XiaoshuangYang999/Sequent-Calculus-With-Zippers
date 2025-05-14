@@ -6,7 +6,7 @@ import Test.QuickCheck
 
 import General
 import CPL
-import IPL2
+import IPL
 import K
 import K4
 import GL
