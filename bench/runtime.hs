@@ -1,6 +1,6 @@
 module Main where
 
-import Control.Monad (when)
+import Control.Monad (unless, when)
 import Criterion.Main
 import qualified Criterion.Types
 import qualified Data.ByteString.Lazy as BL
@@ -13,6 +13,7 @@ import Data.Scientific
 import qualified Data.Vector as V
 import Numeric
 import System.Directory
+import System.Environment (getArgs)
 
 import General
 import CPL
@@ -24,24 +25,39 @@ import S4
 import PForm
 import MForm
 
--- | Set of benchmarks for runtime.
-allItems :: [Case]
-allItems =
-  -- selected formula set:
-     makeCases [ ("IPL", intui) ] [("conPieL",conPieL), ("conPieR",conPieR)] [10,20..100] -- not provable
-  ++ makeCases [ ("K", k) ] [("boxesTop",boxesTop)] [10,20..100] -- provable
-  ++ makeCases [ ("K4", kfour) ] [("lobBoxes",lobBoxes)] [1..10] -- not provable
-  ++ makeCases [ ("GL", gl) ] [("lobBoxes",lobBoxes)] [1..10] -- provable
-  {-
-  -- full formula set:
-     makeCases [("CPL", classical), ("IPL", intui) ] allFormulasP [10] -- ,20..100
-  ++ makeCases [("K", k)] (propFormulasM ++ boxesFormulasM ++ kFormulasM) [10] -- ,20..100
-  ++ makeCases [("K4", kfour)] propFormulasM [10] -- ,20..100
-  ++ makeCases [("GL", gl)] propFormulasM [10]
-  ++ makeCases [("S4", sfour)] propFormulasM [10]
-  -}
-
 type Case = (String, Int -> Bool, [Int])
+
+-- | Selected formulas. Takes only a few minutes to run.
+selection :: [Case]
+selection =
+     makeCases [ ("IPL", intui) ] [("conPieL", conPieL), ("conPieR", conPieR)] [10,20..100] -- not provable
+  ++ makeCases [ ("K", k) ] [("boxesTop", boxesTop)] [10,20..100] -- provable
+  ++ makeCases [ ("K4", kfour) ] [("lobBoxes", lobBoxes)] [1..10] -- not provable
+  ++ makeCases [ ("GL", gl) ] [("lobBoxes", lobBoxes)] [1..10] -- provable
+
+-- | Large set of formulas. Can take multple hours to run.
+allFormulas :: [Case]
+allFormulas =
+     makeCases [("CPL", classical), ("IPL", intui) ] allFormulasP [10,20..100]
+  ++ makeCases [("CPL", classical), ("IPL", intui) ] hardFormulasP [1..10]
+  ++ makeCases [("K", k)] (propFormulasM ++ boxesFormulasM) [10,20..100]
+  ++ makeCases [("K", k)] kFormulasM [1..10]
+  ++ makeCases [("K4", kfour)] (propFormulasM ++ boxesFormulasM) [10,20..100]
+  ++ makeCases [("K4", kfour)] k4FormulasM [1..8]
+  ++ makeCases [("GL", gl)] propFormulasM [1..8]
+  ++ makeCases [("S4", sfour)] (propFormulasM ++ hards4FormulasM) [1..10]
+
+-- | Helper function to run the maximum size of each case.
+-- Ueful to adjust the ranges given above.
+testAllMaxSizeItems :: IO ()
+testAllMaxSizeItems = mapM_ func allItems where
+  func (n1, f, range) = do
+    print (n1 ++ show (maximum range))
+    print $ f (maximum range)
+
+allItems :: [Case]
+allItems = nubBy sameC $ selection ++ allFormulas where
+  sameC (n1, _, _) (n2, _, _) = n1 == n2
 
 makeCases :: (Ord f, Show f) => [(String, Logic f)] -> [(String, Int -> f)] -> [Int] -> [Case]
 makeCases logics forms sizes =
@@ -51,7 +67,8 @@ makeCases logics forms sizes =
   , (lS, logic) <- logics ]
 
 benchMain :: IO ()
-benchMain = defaultMainWith myConfig (map mybench allItems) where
+benchMain =
+  defaultMainWith myConfig (map mybench allItems) where
   mybench (name,f,range) = bgroup name $ map (run f) range
   run f n = bench (show n) $ whnf f n
   myConfig = defaultConfig
@@ -59,7 +76,11 @@ benchMain = defaultMainWith myConfig (map mybench allItems) where
     , Criterion.Types.timeLimit = 10 }
 
 main :: IO ()
-main = prepareMain >> benchMain >> convertMain
+main = do
+  args <- getArgs
+  unless ("--list" `elem` args) prepareMain
+  benchMain
+  unless ("--list" `elem` args) convertMain
 
 -- * CSV to pgfplots
 
@@ -76,7 +97,7 @@ prepareMain = do
     oldDATfile <- doesFileExist (theCSVname ++ ".dat")
     when oldDATfile $ removeFile (theCSVname ++ ".dat")
 
--- | Convert the .csv file to a .dat file to be use with pgfplots.
+-- | Convert the .csv file to a .dat file to be used with pgfplots.
 convertMain :: IO ()
 convertMain = do
   putStrLn "Reading results.csv and converting to .dat for pgfplots."

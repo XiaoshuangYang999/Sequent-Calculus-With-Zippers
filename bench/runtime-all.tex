@@ -1,0 +1,175 @@
+\documentclass{article}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
+
+\usepackage[margin=2cm]{geometry}
+
+\title{Runtime benchmark results for GenZ and GenT}
+\author{}
+
+\begin{document}
+
+\maketitle
+
+Note: ``Tree'' is GenT and ``Zip'' is GenZ, and ``L'' and ``R'' indicate the \texttt{foldl} and \texttt{foldr} variants.
+
+\pgfplotsset{
+  every axis/.style={
+    font=\scriptsize,
+    legend pos=north west, grid=major, width=12cm,
+    ylabel=seconds, ymode=log,
+    xlabel=formula length,
+    unbounded coords=jump,
+  }
+}
+\pgfplotsset{
+  every axis legend/.append style={
+    font=\small, legend image post style={scale=0.5},
+    legend columns=-1,
+    font=\scriptsize,
+  }
+}
+
+\bigskip
+
+\centering
+
+% #1 = formula
+% #2 = logic
+\newcommand{\fourplot}[2]{
+\begin{tikzpicture}
+  \pgfplotstableread{results.csv.dat}\datatable
+  \begin{axis}[xlabel=\textbf{#1 #2} formula length]
+    \addlegendentry{TreeR} \addplot table[y=#1R-#2-GenT] from \datatable;
+    \addlegendentry{ZipR}  \addplot table[y=#1R-#2-GenZ] from \datatable;
+    \addlegendentry{TreeL} \addplot table[y=#1L-#2-GenT] from \datatable;
+    \addlegendentry{ZipL}  \addplot table[y=#1L-#2-GenZ] from \datatable;
+  \end{axis}
+\end{tikzpicture}
+}
+
+% #1 = formula
+% #2 = logic
+\newcommand{\twoplot}[2]{
+\begin{tikzpicture}
+  \pgfplotstableread{results.csv.dat}\datatable
+  \begin{axis}[xlabel=\textbf{#1 #2} formula length]
+    \addlegendentry{Tree} \addplot table[y=#1-#2-GenT] from \datatable;
+    \addlegendentry{Zip}  \addplot table[y=#1-#2-GenZ] from \datatable;
+  \end{axis}
+\end{tikzpicture}
+}
+
+\bigskip
+
+% Plots with L/R versions:
+
+\fourplot{conBot}{CPL}
+
+\fourplot{conBot}{GL}
+
+\fourplot{conBot}{IPL}
+
+\fourplot{conBot}{K}
+
+\fourplot{conBot}{K4}
+
+\fourplot{conBot}{S4}
+
+\fourplot{conPie}{CPL}
+
+\fourplot{conPie}{GL}
+
+\fourplot{conPie}{IPL}
+
+\fourplot{conPie}{K}
+
+\fourplot{conPie}{K4}
+
+\fourplot{conPie}{S4}
+
+\fourplot{conTop}{CPL}
+
+\fourplot{conTop}{GL}
+
+\fourplot{conTop}{IPL}
+
+\fourplot{conTop}{K}
+
+\fourplot{conTop}{K4}
+
+\fourplot{conTop}{S4}
+
+\fourplot{disBot}{CPL}
+
+\fourplot{disBot}{GL}
+
+\fourplot{disBot}{IPL}
+
+\fourplot{disBot}{K}
+
+\fourplot{disBot}{K4}
+
+\fourplot{disBot}{S4}
+
+\fourplot{disPhiPie}{CPL}
+
+\fourplot{disPhiPie}{GL}
+
+\fourplot{disPhiPie}{IPL}
+
+\fourplot{disPhiPie}{K}
+
+\fourplot{disPhiPie}{K4}
+
+\fourplot{disPhiPie}{S4}
+
+\fourplot{disPie}{CPL}
+
+\fourplot{disPie}{GL}
+
+\fourplot{disPie}{IPL}
+
+\fourplot{disPie}{K}
+
+\fourplot{disPie}{K4}
+
+\fourplot{disPie}{S4}
+
+\fourplot{disTop}{CPL}
+
+\fourplot{disTop}{GL}
+
+\fourplot{disTop}{IPL}
+
+\fourplot{disTop}{K}
+
+\fourplot{disTop}{K4}
+
+\fourplot{disTop}{S4}
+
+% Plots with just two lines (no L/R versions):
+
+\twoplot{boxToFewerBox}{K4}
+
+\twoplot{boxToMoreBox}{K}
+
+\twoplot{boxToMoreBox}{K4}
+
+\twoplot{boxesBot}{K}
+
+\twoplot{boxesTop}{K}
+
+\twoplot{extraAtK}{K}
+
+\twoplot{multiVerK}{K}
+
+\twoplot{phiImpPie}{CPL}
+
+\twoplot{phiImpPie}{IPL}
+
+\twoplot{lobBoxes}{GL}
+
+\twoplot{lobBoxes}{K4}
+
+\end{document}

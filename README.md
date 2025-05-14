@@ -62,7 +62,14 @@ see <https://github.com/XiaoshuangYang999/Sequent-Calculus-With-Zippers/actions>
 ## Benchmarks
 
 You should have LaTeX and [pandoc](https://pandoc.org/) installed.
-Then run `make bench/runtime.pdf` and `make bench/memory.pdf`.
+
+To run the benchmarks for a small selection of formulas,
+run `make bench/runtime.pdf` and `make bench/memory.pdf`.
+The runtime benchmark will take around 30 minutes, the memory benchmark less than one minute.
+
+To run benchmarks on a larger set of formulas,
+run `make bench/runtime-all.pdf` and `make bench/memory-all.pdf`.
+Note: this runtime benchmark will take multiple hours.
 
 Example results are available at
 <https://github.com/XiaoshuangYang999/Sequent-Calculus-With-Zippers/releases>.

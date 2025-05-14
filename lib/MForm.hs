@@ -7,7 +7,7 @@ import Data.List as List
 -- Added temporarily for ghci test purpose
 -- import K
 -- import K4
--- import S4 
+-- import S4
 -- import GL
 
 a1,b1,c1,d1,e1 :: FormM
@@ -87,7 +87,7 @@ extraAtK n = ImpM (Box (List.foldr ImpM (AtM 'a') (listOfAt n ++ [AtM 'b'])))
 
 -- Bench formula for S4. Not provable
 negBoxes :: Int -> FormM
-negBoxes n = negM $ Box $ negM $ boxes n a1 
+negBoxes n = negM $ Box $ negM $ boxes n a1
 
 
 propFormulasM :: [(String, Int -> FormM)]
@@ -95,7 +95,7 @@ propFormulasM =  map (fmap (pTom .)) allFormulasP
 
 boxesFormulasM :: [(String, Int -> FormM)]
 boxesFormulasM =
-  [ ("boxesTop", boxesTop) -- T used to be faster than Z 
+  [ ("boxesTop", boxesTop) -- T used to be faster than Z
   , ("boxesBot", boxesBot)
   ]
 
@@ -120,8 +120,12 @@ glFormulasM =
 
 s4FormulasM :: [(String, Int -> FormM)]
 s4FormulasM =
-  [ 
-  --   ("boxToFewerBox", boxToFewerBox) -- T
-  -- , ("lobBoxes", lobBoxes) -- F
-   ("negBoxes", negBoxes) -- F
+  [ ("negBoxes", negBoxes) -- F
+  ]
+
+-- Only go until 20 or you will run out of memory.
+hards4FormulasM :: [(String, Int -> FormM)]
+hards4FormulasM =
+  [ ("boxToFewerBox", boxToFewerBox) -- T
+  , ("lobBoxes", lobBoxes) -- F
   ]

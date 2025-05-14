@@ -88,11 +88,9 @@ disBotR k = foldr DisP BotP (replicate k BotP )
 disBotL :: Int -> FormP
 disBotL k = foldl DisP BotP (replicate k BotP )
 
-
-
 allFormulasP :: [(String, Int -> FormP)]
-allFormulasP =[
-   ("disPhiPie-R", disPhiPieR)
+allFormulasP =
+  [ ("disPhiPie-R", disPhiPieR)
   , ("disPhiPie-L", disPhiPieL)
   , ("disPie-R", disPieR)
   , ("disPie-L", disPieL)
@@ -106,5 +104,9 @@ allFormulasP =[
   , ("conTop-L", conTopL) -- new
   , ("disTop-R", disTopR) -- new
   , ("disTop-L", disTopL) -- new
-  -- , ("phiImpPie",phiImpPie) -- only go until 20
   ]
+
+-- | Only go until 20 or you will run out of memory.
+hardFormulasP :: [(String, Int -> FormP)]
+hardFormulasP =
+   [ ("phiImpPie", phiImpPie) ]
