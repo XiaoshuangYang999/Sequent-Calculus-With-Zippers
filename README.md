@@ -38,11 +38,6 @@ You can use `stack ghci` to run examples like this:
 
 In the above `K.k` is the name of the `Logic`, i.e. the proof system.
 
-To run all tests, run `stack test`.
-
-To run all benchmarks, run `stack bench`.
-Note that this can take quite long.
-
 ## LaTeX output
 
 The prover can generate code for [bussproofs](https://ctan.org/pkg/bussproofs).
@@ -55,6 +50,14 @@ This will write code into `temp.tex` and then run `pdflatex` on it.
 The result looks as follows.
 
 ![](doc/GL-example.png)
+
+## Tests
+
+To run all tests locally, run `stack test`.
+This should not take more than five minutes.
+
+The tests are also run automatically for each commit,
+see <https://github.com/XiaoshuangYang999/Sequent-Calculus-With-Zippers/actions> for results.
 
 ## Benchmarks
 

@@ -14,8 +14,6 @@ clean:
 	stack clean
 	rm -f *.aux *.log *.out *.snm *.toc *.vrb *.nav *.synctex.gz *.blg *.bbl *.fdb_latexmk *.fls *.ind *.idx *.ilg *.bcf *.run.xml *.xdv
 
-# TODO adjust list of benchmark cases
-
 SELECTION = conPieL-IPL- conPieR-IPL- boxesTop-K- lobBoxes-K4- lobBoxes-GL-
 
 bench/runtime.pdf:
