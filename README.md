@@ -8,6 +8,9 @@ The code in this repository was originally developed as part of the following ma
   University of Amsterdam, 2024.
   <https://eprints.illc.uva.nl/id/eprint/2354>
 
+The original code from the thesis can be found in the `thesis-version` branch.
+Ongoing updates and improvements are included in the `main` branch.
+
 ## How to
 
 You should have the Haskell build tool `stack` installed, via [ghcup](https://www.haskell.org/ghcup/).
