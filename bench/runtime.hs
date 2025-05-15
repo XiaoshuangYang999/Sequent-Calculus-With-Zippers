@@ -44,8 +44,9 @@ allFormulas =
   ++ makeCases [("K", k)] kFormulasM [1..10]
   ++ makeCases [("K4", kfour)] (propFormulasM ++ boxesFormulasM) [10,20..100]
   ++ makeCases [("K4", kfour)] k4FormulasM [1..8]
-  ++ makeCases [("GL", gl)] propFormulasM [1..8]
-  ++ makeCases [("S4", sfour)] (propFormulasM ++ hards4FormulasM) [1..10]
+  ++ makeCases [("GL", gl)] propFormulasM [10,20..100]
+  ++ makeCases [("S4", sfour)] propFormulasM [10,20..100]
+  ++ makeCases [("S4", sfour)] hards4FormulasM [1..10]
 
 -- | Helper function to run the maximum size of each case.
 -- Ueful to adjust the ranges given above.
