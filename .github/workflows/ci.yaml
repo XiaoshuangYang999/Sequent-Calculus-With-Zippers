@@ -5,8 +5,8 @@ on: [push]
 name: CI
 
 jobs:
-  build-and-test:
-    name: Build and run tests
+  tests:
+    name: Compile and run tests
     runs-on: ubuntu-latest
     steps:
     - name: Cache
@@ -17,12 +17,12 @@ jobs:
           ~/.stack
           ~/.stack-work
     - uses: actions/checkout@v4
-    - name: Compile all tests
+    - name: Compile tests
       run: stack --system-ghc test --no-run-tests
-    - name: "Run all tests"
+    - name: "Run tests"
       run: stack --system-ghc test
   build-benchmarks:
-    name: Check that benchmarks compile
+    name: Compile benchmarks
     runs-on: ubuntu-latest
     steps:
     - name: Cache
@@ -33,5 +33,5 @@ jobs:
           ~/.stack
           ~/.stack-work
     - uses: actions/checkout@v4
-    - name: Compile web interface
+    - name: Compile benchmarks
       run: stack --system-ghc bench --no-run-benchmarks

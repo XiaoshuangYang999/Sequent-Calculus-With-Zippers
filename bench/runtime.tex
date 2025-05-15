@@ -40,10 +40,10 @@ Note: ``Tree'' is GenT and ``Zip'' is GenZ, and ``L'' and ``R'' indicate the \te
 \begin{tikzpicture}
   \pgfplotstableread{results.csv.dat}\datatable
   \begin{axis}[xlabel=\textbf{#1 #2} formula length]
-    \addlegendentry{TreeR} \addplot table[y=#1R-#2-GenT] from \datatable;
-    \addlegendentry{ZipR}  \addplot table[y=#1R-#2-GenZ] from \datatable;
-    \addlegendentry{TreeL} \addplot table[y=#1L-#2-GenT] from \datatable;
-    \addlegendentry{ZipL}  \addplot table[y=#1L-#2-GenZ] from \datatable;
+    \addlegendentry{TreeR} \addplot table[y=#1-R-#2-GenT] from \datatable;
+    \addlegendentry{ZipR}  \addplot table[y=#1-R-#2-GenZ] from \datatable;
+    \addlegendentry{TreeL} \addplot table[y=#1-L-#2-GenT] from \datatable;
+    \addlegendentry{ZipL}  \addplot table[y=#1-L-#2-GenZ] from \datatable;
   \end{axis}
 \end{tikzpicture}
 }
