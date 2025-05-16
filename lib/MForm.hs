@@ -13,15 +13,6 @@ import Data.List as List
 a1,b1,c1,d1,e1 :: FormM
 [a1,b1,c1,d1,e1] = map AtM ['a','b','c','d','e']
 
--- Never holds. Fixed!
-ktest :: FormM
-ktest = ImpM (Box (ImpM a1 b1)) (ImpM (Box a1) (ImpM (Box b1) (Box c1)))
-
--- Holds in all modal logics
-modalMP :: FormM
-modalMP = ImpM (ConM (Box a1) (Box (ImpM a1 b1))) (Box b1)
-
-
 -- * Axioms
 
 -- Holds in all modal logics
@@ -48,7 +39,17 @@ consistency = negM . Box $ BotM
 density :: FormM
 density = ImpM (Box (Box a1)) (Box a1)
 
+-- Holds in all modal logics
+f1 :: FormM
+f1 = ImpM (ConM (Box a1) (Box (ImpM a1 b1))) (Box b1)
+
+-- Never holds.
+f2 :: FormM
+f2 = ImpM (Box (ImpM a1 b1)) (ImpM (Box a1) (ImpM (Box b1) (Box c1)))
+
+
 -- * For benchmarks
+
 boxes :: Int -> FormM -> FormM
 boxes 0 f = f
 boxes n f = Box (boxes (n-1) f)
@@ -59,7 +60,7 @@ boxesTop n = boxes n topM
 boxesBot :: Int -> FormM
 boxesBot n = boxes n BotM
 
--- Holds in K4, S4
+-- Holds in K4, S4, GL
 boxToMoreBox :: Int -> FormM
 boxToMoreBox n = ImpM (boxes n a1) (boxes (n + 1) a1)
 
@@ -88,7 +89,6 @@ extraAtK n = ImpM (Box (List.foldr ImpM (AtM 'a') (listOfAt n ++ [AtM 'b'])))
 -- Bench formula for S4. Not provable
 negBoxes :: Int -> FormM
 negBoxes n = negM $ Box $ negM $ boxes n a1
-
 
 propFormulasM :: [(String, Int -> FormM)]
 propFormulasM =  map (fmap (pTom .)) allFormulasP
