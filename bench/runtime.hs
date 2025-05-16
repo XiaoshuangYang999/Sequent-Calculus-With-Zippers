@@ -30,7 +30,7 @@ type Case = (String, Int -> Bool, [Int])
 -- | Selected formulas. Takes only a few minutes to run.
 selection :: [Case]
 selection =
-     makeCases [ ("IPL", intui) ] [("conPieL", conPieL), ("conPieR", conPieR)] [10,20..100] -- not provable
+     makeCases [ ("IPL", intui) ] [("conPie-L", conPieL), ("conPie-R", conPieR)] [10,20..100] -- not provable
   ++ makeCases [ ("K", k) ] [("boxesTop", boxesTop)] [10,20..100] -- provable
   ++ makeCases [ ("K4", kfour) ] [("lobBoxes", lobBoxes)] [1..10] -- not provable
   ++ makeCases [ ("GL", gl) ] [("lobBoxes", lobBoxes)] [1..10] -- provable
